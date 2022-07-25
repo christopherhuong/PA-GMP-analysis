@@ -9,19 +9,43 @@ library(qgraph)
 library(ppcor)
 
 dat1 <- read.csv("mhm_data_2022-07-21_19-46-52.csv", 
-                 stringsAsFactors = T)
-
-# Count rows with missing values
-row.has.na <- apply(dat1, 1, function(x){any(is.na(x))})
-sum(row.has.na)
-# Percent missing values by variable
-percentmiss <- function(x){
-  sum(is.na(x)) / length(x) * 100} 
-
-apply(dat1, 2, percentmiss)
+                 stringsAsFactors = T, na.strings = "")
 
 
-######## need to convert blank spaces to NA???
+#############################################################
+summary(dat1$Biological.Sex)
+summary(dat1$Is.identity.different.from.biological.sex)
+summary(dat1$Country)
+summary(dat1$What.is.your.current.family.situation.)
+summary(dat1$Ethnicity)
+summary(dat1$Education)
+summary(dat1$Employment)
+summary(dat1$Household.Income)
+
+
+
+
+
+
+summary(dat1$Overall.MHQ)
+summary(dat1$Core.Cognition)
+summary(dat1$Complex.Cognition)
+summary(dat1$Drive...Motivation)
+summary(dat1$Mood...Outlook)
+summary(dat1$Social...Self)
+summary(dat1$Mind.Body.Connection)
+
+
+tapply(dat1$Country, dat1$Household.Income, summary)
+#check summary statistics by group. seems like only US, india, and germany have income data
+
+
+
+
+
+
+
+
 
 
 
