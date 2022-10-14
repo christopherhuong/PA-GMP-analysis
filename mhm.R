@@ -1,29 +1,29 @@
 library(tidyverse)
 
+setwd("C:/Users/denve/OneDrive - University of Texas at San Antonio/UTSA/1 - Research/Mental Health Million/Exercise and Subdomains of Mental Health among Young Adults")
 
 dat1 <- read.csv("mhm_data_2022-07-21_19-46-52.csv", 
                  stringsAsFactors = T, na.strings = "")
 
 
-#############################################################
+# Data Wrangling ----------------------------------------------------------
+
 
 
 tapply(dat1$Country, dat1$Household.Income, summary)
 #check summary statistics by group. seems like only US, india, and germany have income data
 
 
-##################### MLM ################
-library(nlme)
-
+dat1$id <- 1:nrow(dat1)
 
 
 ###### select relevant variables and rename to new DF. probably a cleaner way to do this
-dat1$mhq <- dat1$Overall.MHQ
-mhm <- select(dat1, mhq)
+dat1$mhq <- dat1$Overall.MHQ       #rename Overall.MHQ -> mhq
+mhm <- select(dat1, mhq)          #create new df with column mhq
 
 
-mhm <- mhm %>%
-  add_column(
+mhm <- mhm %>%                    #add and rename relevant variables to new df
+  add_column(id = dat1$id,
              core.cog = dat1$Core.Cognition,
              complex.cog = dat1$Complex.Cognition,
              drive.motivation = dat1$Drive...Motivation,
@@ -68,9 +68,11 @@ nrow(mhm[mhm$exercise == 0,])
 ##    0(No)   1(Yes) 
 ### 27416 15811
 
+mhm$exercise <- as.factor(mhm$exercise)
 
 
 
+mhm[mhm == "|Prefer not to say"] <- NA  
 ### due to age of sample, only use childhood trauma and leave out adult trauma?
 mhm$childhood.trauma <- 
   if_else((mhm$childhood.trauma == "|I did not experience any of the above during my childhood")|(mhm$childhood.trauma == "|None of the above"), 
@@ -79,10 +81,10 @@ mhm$childhood.trauma <- as.factor(mhm$childhood.trauma)
 #  No   Yes  NA's 
 #11817 29506  1904 
 
+table(mhm$education)
 
 
-
-mhm <- mhm %>%
+mhm <- mhm %>%                 #rename  #made mistake######################
   mutate(education = case_when(education == "Some High School" ~ "less.hs",
                                education == "Primary Education" ~ "less.hs",
                                education == "High School" ~ "hs",
@@ -92,14 +94,16 @@ mhm <- mhm %>%
                                education == "Master's Degree" ~ "grad.deg",
                                education == "Ph.D. or higher" ~ "grad.deg",
                                education == "J.D" ~ "grad.deg",
-                               education == "M.D." ~ "grad.deg"))
+                               education == "M.D." ~ "grad.deg",
+                               education == "Other" ~ "other")) ##added
   
 mhm$education <- as.factor(mhm$education)
-# mhm$education[mhm$education == "Other"] <- NA
-# any variable value not included in case_when automatically becomes NA?
 
-mhm <- mhm %>%
-  mutate(education = fct_relevel(education, "less.hs",
+# any variable value not included in case_when automatically becomes NA?
+table(mhm$education)
+mhm <- mhm %>%               #reorder
+  mutate(education = fct_relevel(education, "other",
+                                 "less.hs",
                                  "hs",
                                  "vocational",
                                  "assoc.deg",
@@ -107,334 +111,421 @@ mhm <- mhm %>%
                                  "grad.deg"
                                  )) 
 
-#less.hs         hs vocational  assoc.deg   bach.deg   grad.deg       NA's 
-#3440      17102       1159       2153      12288       2115       4970 
- 
+table(mhm$education)
 
 
-
-
-# summary(lm(mhq ~ exercise
-#             + sex
-#             + identity.diff
-#             + education
-#             + employment
-#             + relationship.status
-#             + sleep
-#             + disability
-#             + seek.mh.treatment
-#             + childhood.trauma,
-#             
-#             data = mhm))
-
-
-
-### multiple imputation + matching and weighting (have to check for assumptions first) ##
-# https://meghapsimatrix.com/post/mi_ps/
-# https://journal.r-project.org/archive/2021/RJ-2021-073/RJ-2021-073.pdf
-
-
-library(MatchThem)
-library(mice)
-library(naniar)
-
-gg_miss_var(mhm, show_pct = T)
-# percent missing by variable
-
-mhm1 <- mhm %>%
-  select(mhq, core.cog, complex.cog, drive.motivation, mood.outlook, social.self, mind.body,
-         exercise, sex, identity.diff, education, employment, relationship.status, sleep,
+impute <- mhm %>%  #new df with outcomes + covariates including country
+  select(id, country, mhq, core.cog, complex.cog, drive.motivation, mood.outlook, social.self, mind.body,
+         exercise, sex, identity.diff, country, education, employment, relationship.status, sleep,
          socialize, disability, seek.mh.treatment, childhood.trauma
          )
-#left out country and ethnicity for sake of MI
 
-system.time(temp_data <- mice(mhm1, m = 5, maxit = 5, seed = 1111))
+# Multilevel Imputation Model ---------------------------------------------
+impute$country <- as.integer(impute$country)
 
-save(temp_data, file = "temp_data.RData")
+library(broom.mixed)
+library(MCMCglmm)
+library(msm)
+library(tmvtnorm)
+install.packages("https://cran.r-project.org/src/contrib/Archive/linLIR/linLIR_1.1.tar.gz",
+                 repos=NULL, method="libcurl")
+install.packages("https://cran.r-project.org/src/contrib/Archive/hmi/hmi_1.0.0.tar.gz",
+                 repos=NULL, method="libcurl")
+library(hmi)
+library(mice)
+library(miceadds)
 
-load("temp_data.RData")
-imp <- complete(temp_data, action = "long")
+dat_long <- impute %>% 
+  select(id, country, mhq, core.cog, complex.cog, drive.motivation, mood.outlook, social.self, mind.body,
+         exercise, sex, identity.diff, country, education, employment, relationship.status, sleep,
+         socialize, disability, seek.mh.treatment, childhood.trauma
+  )
+
+summary(dat_long)
 
+dat_long$sex <- droplevels(dat_long$sex)
+dat_long$identity.diff <- droplevels(dat_long$identity.diff)
+dat_long$disability <- droplevels(dat_long$disability)
+dat_long$seek.mh.treatment <- droplevels(dat_long$seek.mh.treatment)
 
-##################################
-covs <- imp %>%
-  select(sex, identity.diff, education, employment, relationship.status, sleep,
-         socialize, disability, seek.mh.treatment, childhood.trauma)
-
-
-ps_eq <- paste("exercise ~ ", paste(names(covs), collapse = " + "))
-ps_eq
-# paste propensity score model equation by grouping variable (exercise)
-
-
-estimate_ps <- function(equation, dat){
-  
-  ps_model <- glm(as.formula(equation), family = binomial, data = dat)
-  
-  dat <- dat %>%
-    mutate(ps_logit = predict(ps_model, type = "link"),
-           ps = predict(ps_model, type = "response"))
-  
-  return(dat)
-  
-}
-
-
-imp_dat_ps <- imp %>%
-  group_by(.imp) %>%
-  do(estimate_ps(ps_eq, .)) %>%
-  ungroup()
-
- #function that runs logistic model on pasted equation and creates column for 
-# logit of propensity score and propensity score
-
-
-## combining propensity scores from imputed data sets to estimate ATT
-    ## across = averaging scores from across data sets to calculate weights
-    ## within = running analysis with scores from each data set
-
-
-imp_dat_ps$exercise <- as.numeric(paste(imp_dat_ps$exercise))
-
-
-imp_dat_ps <- imp_dat_ps %>%
-  group_by(.id) %>%
-  mutate(ps_across = mean(ps)) %>%
-  ungroup() %>%
-  mutate(att_wt_across = exercise + (1 - exercise) * ps_across/(1 - ps_across),
-         att_wt_within = exercise + (1 - exercise) * ps/(1 - ps))
-
-
-imp_dat_ps %>%
-  select(.imp, ps, ps_across, att_wt_across, att_wt_within)
-
-#calculating weights using across and within method
-
-
-
-imp_dat_ps %>%
-  mutate(drop = if_else(exercise == 1, "Non-exercisers", "Exercisers"),
-         ps_across_logit = log(ps_across/ (1 - ps_across))) %>%
-  filter(.imp == 1) %>%
-  ggplot(aes(x = ps_across_logit, fill = drop)) +
-  geom_density(alpha = .5) + 
-  labs(x = "Logit Propensity Scores", y = "Density", fill = "") + 
-  ggtitle("Common Support: Across Method") +
-  theme_bw()
-
-
-# propensity scores for both groups overlap
-# satisfying 'common support assumption' for across method
-
-
-
-
-imp_dat_ps %>%
-  mutate(drop = if_else(exercise == 1, "Non-exercisers", "Exercisers")) %>%
-  ggplot(aes(x = ps_logit, fill = drop)) +
-  geom_density(alpha = .5) + 
-  labs(x = "Logit Propensity Scores", y = "Density", fill = "") + 
-  ggtitle("Common Support: Within Method") + 
-  facet_wrap(~ .imp, ncol = 2) + 
-  theme_bw()
-
-# propensity scores overlap for each imputation, satisfying common support assumption
-# for within method
-
-
-
-####       check balances on MI data sets ###########
-library(colbalt)
-
-
-
-
-
-#### estimating average treatment effect on the treated (ATT)
-library(estimatr)
-library(broom)
-library(knitr)
-
-estimate_ATT <- function(equation, dat, wts){
-  
-  wts <- dat %>% pull({{wts}})
-  
-  model <- lm_robust(as.formula(equation), data = dat, weights = wts)
-  
-  res <- model %>%
-    tidy() %>%
-    filter(term == "exercise") %>%
-    select(term, estimate, se = std.error, ci_low = conf.low, ci_high = conf.high, df = df)
-  
-  return(res)
-}
-
-#function that estimates ATT
-
-equation_ancova <- paste("mhq ~ exercise + ", paste(names(covs), collapse = " + "))
-equation_ancova
-# paste model equation
-
-
-across_res <- imp_dat_ps %>%
-  group_by(.imp) %>%
-  do(estimate_ATT(equation = equation_ancova, dat = ., wts = att_wt_across)) %>%
-  ungroup()
-
-within_res <- imp_dat_ps %>%
-  group_by(.imp) %>%
-  do(estimate_ATT(equation = equation_ancova, dat = ., wts = att_wt_within)) %>%
-  ungroup()
-#run regression function using weights from across and within methods on each imputed data set
-
-
-###### pooling results #########
-
-
-calc_pooled <- function(dat, est, se, df){
-  
-  dat <- dat %>%
-    mutate(est = dat %>% pull({{est}}),
-           se = dat %>%pull({{se}}),
-           df = dat %>% pull({{df}}))
-  
-  pooled <- dat %>%
-    summarize(m = n(),
-              B = var(est),  # between imputation var
-              beta_bar = mean(est), # mean of estimated reg coeffs
-              V_bar = mean(se^2), # mean of var - hc corrected   within imp var
-              eta_bar = mean(df)) %>%   # mean of df
-    mutate(
-      
-      V_total = V_bar + B * (m + 1) / m,  #between and within var est
-      gamma = ((m + 1) / m) * B / V_total,  
-      df_m = (m - 1) / gamma^2,
-      df_obs = eta_bar * (eta_bar + 1) * (1 - gamma) / (eta_bar + 3),
-      df = 1 / (1 / df_m + 1 / df_obs),
-      
-      # output
-      se = sqrt(V_total),
-      ci_lower = beta_bar - se * qt(0.975, df = df),
-      ci_upper = beta_bar + se * qt(0.975, df = df)) %>%
-    
-    select(est = beta_bar, se, df, ci_lower, ci_upper) 
-  
-  return(pooled)
-  
-}
-
-### function to pool results across imputations
-
-across_pooled <- calc_pooled(dat = across_res, est = estimate, se = se, df = df)
-across_pooled %>%
-  kable(digits = 3)
-
-#output:
-# |    est|    se|      df| ci_lower| ci_upper|
-#   |------:|-----:|-------:|--------:|--------:|
-#   | 19.148| 0.647| 34225.9|    17.88|   20.417|
-
-
-within_pooled <- calc_pooled(dat = within_res, est = estimate, se = se, df = df)
-within_pooled %>%
-  kable(digits = 3)
-
-# #output:
-# |    est|    se|       df| ci_lower| ci_upper|
-#   |------:|-----:|--------:|--------:|--------:|
-#   | 19.159| 0.648| 31297.22|   17.889|   20.429|
-
-#beautiful
-### exercisers (exercise = yes/1) are predicted to score ~ 19pts higher on mhq 
-### compared to non exercisers (exercise = no/0)
-
-
-
-
-
-
-
-
-
-
-
-# ###### extra stuff 
-# ########################################################################
-# dat2 <- select(dat1, Adaptability.to.Change:Adult.traumas)
-# 
-# dat2 <- dat2[,-which(sapply(dat2, class) == "factor")]
-# dat2 <- select(dat2, -c(49:54))
-# #removes all factor variables for correlation matrix
-# 
-# cormax <- cor(dat2, use = "pairwise.complete.obs")
-# KMO(dat2)
-# cortest.bartlett(dat2)
-# det(cormax)
-# 
-# ### Normality w MVN package
-# #https://cran.r-project.org/web/packages/MVN/vignettes/MVN.pdf
-# library(MVN)
-# result <- mvn(dat2, mvnTest = "mardia")
-# result$multivariateNormality
-# 
-# 
-# parallel <- 
-#   fa.parallel(dat2, 
-#               fm="ml", fa="fa") 
-# 
-# 
-# 
-# obs = data.frame(parallel$fa.values)
-# obs$type = c('Observed Data')
-# obs$num = c(row.names(obs))
-# obs$num = as.numeric(obs$num)
-# colnames(obs) = c('eigenvalue', 'type', 'num')
-# 
-# View(obs)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+summary(dat_long)
+
+
+predMatrix <- quickpred(dat_long, mincor=0.10)
+predMatrix[, c("id")] <- 0
+predMatrix[, c("country")] <- -2
+predMatrix[c("country","id"), "country"] <- 0
+
+impMethod <- make.method(data = dat_long, defaultMethod = "pmm")
+impMethod[c("sex")] <- "polyreg"
+impMethod[c("identity.diff")] <- "logreg"
+impMethod[c("education")] <- "polyreg"
+impMethod[c("relationship.status")] <- "polyreg"
+impMethod[c("disability")] <- "logreg"
+impMethod[c("seek.mh.treatment")] <- "logreg"
+impMethod[c("childhood.trauma")] <- "logreg"
+#why not for socialize?####################################################
+
+
+#test the imputation model
+imp <- mice(dat_long, method = impMethod, 
+            predictorMatrix = predMatrix, 
+            maxit = 2,
+            m = 2)
+
+densityplot(imp)
+
+plot(imp)
+
+View(complete(imp,2))
+
+summary(complete(imp,1))
+
+#run full imputation model
+imp_full <- mice(dat_long, method = impMethod, 
+                 predictorMatrix = predMatrix, 
+                 maxit = 5,
+                 m = 5)
+
+plot(imp_full)
+
+densityplot(imp_full)
+
+View(complete(imp_full,2))
+
+summary(complete(imp_full,1))
+
+#randomly select 1 dataset for plotting purposes
+floor(runif(1, min=0, max=5))
+#[1] 4
+imp_full.4 <- complete(imp_full,4)
+summary(imp_full.4)
+
+imp_long <- complete(imp_full, action = 'long', include = TRUE)
+write.csv(imp_long,"C:/Users/denve/OneDrive - University of Texas at San Antonio/UTSA/1 - Research/Mental Health Million/Exercise and Subdomains of Mental Health among Young Adults//imp_long_5.csv", row.names = FALSE)
+
+##subset multiply imputed datasets
+#Step 1
+###start here to begin with imputed dataset
+imp_long <- read_csv('imp_long_5.csv')
+
+#Step 2 - reformat into multiply imputed datasets
+imp_mids <- as.mids(imp_long)
+
+# Objective 1  - MHQ -------------------------------------------------------------
+
+
+library(MatchThem) 
+library(survey) 
+library(CBPS)
+
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_mhq <-weightthem(exercise ~
+                                   sex
+                                   + identity.diff
+                                   + education
+                                   + employment
+                                   + relationship.status
+                                   + sleep
+                                   + disability
+                                   + seek.mh.treatment
+                                   + childhood.trauma, 
+                                     imp_mids, 
+                                     approach = 'within',
+                                     method = "cbps",
+                                     estimand = "ATT") 
+
+#plots - mean balance is very good, no need to square continuous variables
+library(cobalt)
+love.plot(weighted.datasets_mhq, binary = "std", var.order = "un", stats = c("m", "ks"),
+          thresholds = c(.10, .05)) + theme(legend.position = "top")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+mhq <-with(weighted.datasets_mhq, svyglm(mhq ~ exercise
+                                           + sex
+                                           + identity.diff
+                                           + education
+                                           + employment
+                                           + relationship.status
+                                           + sleep
+                                           + disability
+                                           + seek.mh.treatment
+                                           + childhood.trauma,
+                                                      design = des,
+                                                      family = gaussian())) 
+
+results_mhq <- pool(mhq) #pool results from analysis of m datasets
+
+summary(results_mhq)
+
+# Objective 1a  - Core Cognition -------------------------------------------------------------
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_core.cog <-weightthem(exercise ~
+                                   + sex
+                                   + identity.diff
+                                   + education
+                                   + employment
+                                   + relationship.status
+                                   + sleep
+                                   + disability
+                                   + seek.mh.treatment
+                                   + childhood.trauma, 
+                                   imp_mids,
+                                   approach = 'within',
+                                   method = "cbps",
+                                   estimand = "ATT") 
+
+#plots - mean balance is very good, no need to square continuous variables
+library(cobalt)
+love.plot(weighted.datasets_core.cog, binary = "std", var.order = "un", stats = c("m", "ks"),
+          thresholds = c(.10, .05)) + theme(legend.position = "top")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+core.cog <-with(weighted.datasets_core.cog, svyglm(core.cog ~ exercise
+                                         + sex
+                                         + identity.diff
+                                         + education
+                                         + employment
+                                         + relationship.status
+                                         + sleep
+                                         + disability
+                                         + seek.mh.treatment
+                                         + childhood.trauma,
+                                         design = des,
+                                         family = gaussian())) 
+
+results_core.cog <- pool(core.cog) #pool results from analysis of m datasets
+
+summary(results_core.cog)
+
+# Objective 1b  - Complex Cognition -------------------------------------------------------------
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_complex.cog <-weightthem(exercise ~
+                                   sex
+                                   + country
+                                   + identity.diff
+                                   + education
+                                   + employment
+                                   + relationship.status
+                                   + sleep
+                                   + disability
+                                   + seek.mh.treatment
+                                   + childhood.trauma, 
+                                   imp_mids,
+                                   approach = 'within',
+                                   method = "cbps",
+                                   estimand = "ATT")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+complex.cog <-with(weighted.datasets_complex.cog, svyglm(complex.cog ~ exercise
+                                                   + sex
+                                                   + identity.diff
+                                                   + education
+                                                   + employment
+                                                   + relationship.status
+                                                   + sleep
+                                                   + disability
+                                                   + seek.mh.treatment
+                                                   + childhood.trauma,
+                                                   design = des,
+                                                   family = gaussian())) 
+
+results_complex.cog <- pool(complex.cog) #pool results from analysis of m datasets
+
+summary(results_complex.cog)
+
+# Objective 1c  - Drive Motivation -------------------------------------------------------------
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_drive.motivation <-weightthem(exercise ~
+                                   sex
+                                   + country
+                                   + identity.diff
+                                   + education
+                                   + employment
+                                   + relationship.status
+                                   + sleep
+                                   + disability
+                                   + seek.mh.treatment
+                                   + childhood.trauma, 
+                                   imp_mids,
+                                   approach = 'within',
+                                   method = "cbps",
+                                   estimand = "ATT")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+drive.motivation <-with(weighted.datasets_drive.motivation, svyglm(drive.motivation ~ exercise
+                                                         + sex
+                                                         + identity.diff
+                                                         + education
+                                                         + employment
+                                                         + relationship.status
+                                                         + sleep
+                                                         + disability
+                                                         + seek.mh.treatment
+                                                         + childhood.trauma,
+                                                         design = des,
+                                                         family = gaussian())) 
+
+results_drive.motivation <- pool(drive.motivation) #pool results from analysis of m datasets
+
+summary(results_drive.motivation)
+
+# Objective 1d  - Mood & Outlook -------------------------------------------------------------
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_mood.outlook <-weightthem(exercise ~
+                                   sex
+                                   + country
+                                   + identity.diff
+                                   + education
+                                   + employment
+                                   + relationship.status
+                                   + sleep
+                                   + disability
+                                   + seek.mh.treatment
+                                   + childhood.trauma, 
+                                   imp_mids, 
+                                   approach = 'within',
+                                   method = "cbps",
+                                   estimand = "ATT")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+mood.outlook <-with(weighted.datasets_mood.outlook, svyglm(mood.outlook ~ exercise
+                                                                   + sex
+                                                                   + identity.diff
+                                                                   + education
+                                                                   + employment
+                                                                   + relationship.status
+                                                                   + sleep
+                                                                   + disability
+                                                                   + seek.mh.treatment
+                                                                   + childhood.trauma,
+                                                                   design = des,
+                                                                   family = gaussian())) 
+
+results_mood.outlook <- pool(mood.outlook) #pool results from analysis of m datasets
+
+summary(results_mood.outlook)
+
+
+# Objective 1e  - Social Self -------------------------------------------------------------
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_social.self <-weightthem(exercise ~
+                                            sex
+                                            + country
+                                            + identity.diff
+                                            + education
+                                            + employment
+                                            + relationship.status
+                                            + sleep
+                                            + disability
+                                            + seek.mh.treatment
+                                            + childhood.trauma, 
+                                            imp_mids, 
+                                            approach = 'within',
+                                            method = "cbps",
+                                            estimand = "ATT")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+social.self <-with(weighted.datasets_social.self, svyglm(social.self ~ exercise
+                                                           + sex
+                                                           + identity.diff
+                                                           + education
+                                                           + employment
+                                                           + relationship.status
+                                                           + sleep
+                                                           + disability
+                                                           + seek.mh.treatment
+                                                           + childhood.trauma,
+                                                           design = des,
+                                                           family = gaussian())) 
+
+results_social.self <- pool(social.self) #pool results from analysis of m datasets
+
+summary(results_social.self)
+
+# Objective 1f  -  Mind & Body -------------------------------------------------------------
+
+#Weighting the multiply imputed datasets 
+weighted.datasets_mind.body <-weightthem(exercise ~
+                                           sex
+                                           + country
+                                           + identity.diff
+                                           + education
+                                           + employment
+                                           + relationship.status
+                                           + sleep
+                                           + disability
+                                           + seek.mh.treatment
+                                           + childhood.trauma, 
+                                           imp_mids,
+                                           approach = 'within',
+                                           method = "cbps",
+                                           estimand = "ATT")
+
+############ SURVEY DESIGN 
+#
+des <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+mind.body <-with(weighted.datasets_mind.body, svyglm(mind.body ~ exercise
+                                                         + sex
+                                                         + identity.diff
+                                                         + education
+                                                         + employment
+                                                         + relationship.status
+                                                         + sleep
+                                                         + disability
+                                                         + seek.mh.treatment
+                                                         + childhood.trauma,
+                                                         design = des,
+                                                         family = gaussian())) 
+
+results_mind.body <- pool(mind.body) #pool results from analysis of m datasets
+
+summary(results_mind.body)
+
+
+# Create Table 1 ############################################
+####table 1 package
+install.packages("table1")
+library(table1)
+
+imp_long_0removed <- imp_long %>% 
+  filter(.imp != 0)
+
+
+table1(~ factor(country) + factor(exercise) + factor(sex) + factor(identity.diff) + factor(education)
+       + factor(employment) + factor(relationship.status) + factor(sleep) 
+       + factor(disability) + factor(seek.mh.treatment) + factor(childhood.trauma),
+       data=imp_long_0removed) # "| SuicThink_choice" to stratify by suicidal ideation item
 
