@@ -157,14 +157,13 @@ predMatrix[, c("country")] <- -2
 predMatrix[c("country","id"), "country"] <- 0
 
 impMethod <- make.method(data = dat_long, defaultMethod = "pmm")
-impMethod[c("sex")] <- "polyreg"
-impMethod[c("identity.diff")] <- "logreg"
+impMethod[c("sex")] <- "polyreg"                  #polyreg-> 3+ nominal (unordered) factors
+impMethod[c("identity.diff")] <- "logreg"         #logreg-> binary factor
 impMethod[c("education")] <- "polyreg"
 impMethod[c("relationship.status")] <- "polyreg"
 impMethod[c("disability")] <- "logreg"
 impMethod[c("seek.mh.treatment")] <- "logreg"
 impMethod[c("childhood.trauma")] <- "logreg"
-#why not for socialize?####################################################
 
 
 #test the imputation model
