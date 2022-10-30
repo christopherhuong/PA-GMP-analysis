@@ -3,13 +3,14 @@ library(tidyverse)
 
 
 
-### CHRIS LAB COMP
-dat <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
+# ### CHRIS LAB COMP
+# dat <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
+# ### CHRIS HOME COMP
+# dat <- read.csv("C:/Users/Chris/OneDrive/Documents/INCH/MHM/mhm_data_2022-10-14_14-49-18.csv")
 
 
-
-
-
+#save(dat, file = "dat.RData")
+load("dat.RData")
 
 
 
@@ -232,7 +233,6 @@ predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
 
 
 impMethod <- make.method(data = impute, defaultMethod = "pmm")
-impMethod[c("country")] <- "2lonly.pmm" #2lonly.pmm: Imputes univariate missing data at level 2 using predictive mean matching
 impMethod[c("sex")] <- "polyreg"                 
 impMethod[c("education")] <- "polyreg"
 impMethod[c("relationship")] <- "polyreg"
@@ -243,17 +243,137 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 
 
-# system.time(imp_full <- mice(impute, method = impMethod, 
-#                  predictorMatrix = predMatrix, 
+# system.time(imp <- mice(impute, method = impMethod,
+#                  predictorMatrix = predMatrix,
 #                  maxit = 5,
 #                  m = 5,
 #                  seed = 123))
 
 
 
-#save(imp_full, file = "imp_full.RData")
+# save(imp, file = "imp.RData")
 
-load("imp_full.RData")
+load("imp.RData")
+
+
+
+densityplot(imp)
+plot(imp)
+View(complete(imp,2))
+summary(complete(imp,1))
+
+#randomly select 1 dataset for plotting purposes
+floor(runif(1, min=0, max=5))
+#[1] 4
+imp_full.4 <- complete(imp,4)
+summary(imp_full.4)
+
+imp_long <- complete(imp, action = 'long', include = TRUE)
+
+
+# save(imp_long, file = "imp_long.RData")
+
+load("imp_long.RData")
+
+
+
+#########################                            ###############
+#########################    PROPENSITY SCORING      ###############
+#########################                            ###############
+
+
+library(MatchThem) 
+library(survey) 
+library(CBPS)
+library(cobalt)
+library(knitr)
+
+# estimand = the desired estimand. 
+# For binary and multi-category treatments, can be "ATE",
+# "ATT", "ATC"
+
+
+# Focal = when multi-category treatments are used and ATT weights are requested, which
+# group to consider the "treated" or focal group. This group will not be weighted,
+# and the other groups will be weighted to be more like the focal group. 
+# If specified, estimand will automatically be set to "ATT".
+
+
+weightdat_multi_att <-weightthem(PA ~
+                       age
+                     + sex
+                     + education
+                     + employment
+                     + relationship
+                     + socialize
+                     + sleep
+                     + meddiagnosis
+                     + mhseeking
+                     + childtrauma
+                     + adulttrauma,
+           imp, 
+           approach = 'within',    #calculating distance measures within each imputed dataset
+                                   #and weighting observations based on them 
+           method = "cbps",        #covariate balancing PS
+           estimand = "ATT",
+           focal = "Few days a week") 
+
+
+
+
+
+love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = c("m", "ks"),
+          thresholds = c(.10, .05)) + theme(legend.position = "top")
+
+############ SURVEY DESIGN 
+#
+des1 <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+
+#  double robust analysis
+mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
+                             + PA 
+                             + age
+                             + sex
+                             + education
+                             + employment
+                             + relationship
+                             + socialize
+                             + sleep
+                             + meddiagnosis
+                             + mhseeking
+                             + childtrauma
+                             + adulttrauma,
+                                         design = des1,
+                                         family = gaussian())) 
+
+kable(summary(pool(mhq_multi_att)),
+      digits = 3) #pool results from analysis of m datasets
+
+
+
+
+##################################################################
+
+
+weightdat_multi_ate <-weightthem(PA ~
+                         age
+                       + sex
+                       + education
+                       + employment
+                       + relationship
+                       + socialize
+                       + sleep
+                       + meddiagnosis
+                       + mhseeking
+                       + childtrauma
+                       + adulttrauma,
+                       imp, 
+                       approach = 'within',    
+                       method = "cbps",       
+                       estimand = "ATE")
+
+
+
 
 
 
