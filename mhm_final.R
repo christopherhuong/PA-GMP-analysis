@@ -318,16 +318,22 @@ weightdat_multi_att <-weightthem(PA ~
            estimand = "ATT",
            focal = "Few days a week") 
 
+save(weightdat_multi_att, file = "weightdat_multi_att.RData")
+
+load("weightdat_multi_att.RData")
+
+
+# love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = "m",
+#           thresholds = c(.10, .05)) + theme(legend.position = "top")
 
 
 
 
-love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = c("m", "ks"),
-          thresholds = c(.10, .05)) + theme(legend.position = "top")
+
 
 ############ SURVEY DESIGN 
 #
-des1 <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
+des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
 
 #  double robust analysis
 mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
@@ -343,11 +349,12 @@ mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~
                              + mhseeking
                              + childtrauma
                              + adulttrauma,
-                                         design = des1,
+                                         design = des_multi_att,
                                          family = gaussian())) 
 
 kable(summary(pool(mhq_multi_att)),
-      digits = 3) #pool results from analysis of m datasets
+      digits = 3) 
+
 
 
 
@@ -355,7 +362,7 @@ kable(summary(pool(mhq_multi_att)),
 ##################################################################
 
 
-weightdat_multi_ate <-weightthem(PA ~
+system.time(weightdat_multi_ate <-weightthem(PA ~
                          age
                        + sex
                        + education
@@ -370,7 +377,7 @@ weightdat_multi_ate <-weightthem(PA ~
                        imp, 
                        approach = 'within',    
                        method = "cbps",       
-                       estimand = "ATE")
+                       estimand = "ATE"))
 
 
 
