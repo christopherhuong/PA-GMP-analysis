@@ -1,6 +1,7 @@
 library(tidyverse)
 
 
+#diagnosis of MH disorder
 
 
 # ### CHRIS LAB COMP
@@ -299,8 +300,8 @@ library(knitr)
 # If specified, estimand will automatically be set to "ATT".
 
 
-weightdat_multi_att <-weightthem(PA ~
-                       age
+weightdat_multi_att <-weightthem(PA ~   #pa*age
+                       age   
                      + sex
                      + education
                      + employment
@@ -337,7 +338,7 @@ des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long)
 
 #  double robust analysis
 mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
-                             + PA 
+                             + PA   #pa*age
                              + age
                              + sex
                              + education
