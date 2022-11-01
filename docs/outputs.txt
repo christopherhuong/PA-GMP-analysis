@@ -1,3 +1,23 @@
+ weightdat_multi_att <-weightthem(PA ~   
+                       age   
+                     + sex
+                     + education
+                     + employment
+                     + relationship
+                     + socialize
+                     + sleep
+                     + meddiagnosis
+                     + mhseeking
+                     + childtrauma
+                     + adulttrauma,
+           imp, 
+           approach = 'within',    #calculating distance measures within each imputed dataset
+                                   #and weighting observations based on them 
+           method = "cbps",        #covariate balancing PS
+           estimand = "ATT",
+           focal = "Few days a week") )
+
+
 des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
 
 #  double robust analysis
