@@ -5,7 +5,7 @@ library(tidyverse)
 
 
 # ### CHRIS LAB COMP
-# dat <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
+dat3 <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
 # ### CHRIS HOME COMP
 # dat <- read.csv("C:/Users/Chris/OneDrive/Documents/INCH/MHM/mhm_data_2022-10-14_14-49-18.csv")
 
@@ -50,6 +50,7 @@ dat1 <- dat1 %>%                    #add and rename relevant variables to new df
               sleep = dat$Frequency.of.getting.a.good.nights.sleep,
               meddiagnosis = dat$Presence.Absence.of.Diagnosed.Medical.Disorder,
               mhseeking = dat$Mental.Health.Treatment.Status,
+              mhdiagnosis = dat$Diagnosed.mental.health.disorders,
               childtrauma = dat$Childhood.traumas,
               adulttrauma = dat$Adult.traumas
                )
@@ -62,6 +63,9 @@ dat1[dat1 == ""] <- NA
 sum(is.na(dat1))
 
 mhm <- dat1
+
+library(naniar)
+gg_miss_var(mhm, show_pct = TRUE)
 
 ######################### PHYSICAL ACTIVITY ###############
 # only keep english responses, removes 2 rows which had arabic or something
@@ -161,14 +165,20 @@ mhm$sleep <- factor(mhm$sleep, order = T,
                                "Most of the time",
                                "All of the time"))
 summary(mhm$sleep)
-####################### MEDICAL DIAGNOSIS AND MENTAL HEALTH ########
+####################### MEDICAL DIAGNOSIS ############
 table(mhm$meddiagnosis)
 mhm$meddiagnosis <- factor(mhm$meddiagnosis, order = F)
 summary(mhm$meddiagnosis)
 
+
+########################## MH SEEKING AND MH DIAGNOSIS ############
 table(mhm$mhseeking)
 mhm$mhseeking <- factor(mhm$mhseeking, order = F)
 summary(mhm$mhseeking)
+
+table(mhm$mhdiagnosis)
+mhm$mhdiagnosis <- factor(mhm$mhdiagnosis, order = F)
+summary(mhm$mhdiagnosis)
 ##################### TRAUMAS ############  should we combine??
 mhm$childtrauma <- 
   if_else((mhm$childtrauma == "|I did not experience any of the above during my childhood")|(mhm$childtrauma == "|None of the above"), 
@@ -184,7 +194,7 @@ summary(mhm$adulttrauma)
 
 
 
-library(naniar)
+
 gg_miss_var(mhm, show_pct = TRUE)
 
 mhm <- mhm %>%
