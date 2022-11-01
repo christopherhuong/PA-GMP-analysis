@@ -341,7 +341,8 @@ library(knitr)
 # If specified, estimand will automatically be set to "ATT".
 
 
-weightdat_multi_att <-weightthem(PA ~   
+system.time(
+  weightdat_multi_att <-weightthem(PA ~   
                        age   
                      + sex
                      + genderdiff
@@ -359,7 +360,7 @@ weightdat_multi_att <-weightthem(PA ~
                                    #and weighting observations based on them 
            method = "cbps",        #covariate balancing PS
            estimand = "ATT",
-           focal = "Rarely/Never") 
+           focal = "Rarely/Never") )
 
 save(weightdat_multi_att, file = "weightdat_multi_att.RData")
 
@@ -380,10 +381,10 @@ love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = "m",
 des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
 
 #  double robust analysis
-system.time(
-  mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
+mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
                                PA*age
                              + sex
+                             + genderdiff
                              + education
                              + employment
                              + relationship
@@ -394,7 +395,7 @@ system.time(
                              + childtrauma
                              + adulttrauma,
                                          design = des_multi_att,
-                                         family = gaussian())) )
+                                         family = gaussian())) 
 
 kable(summary(pool(mhq_multi_att)),
       digits = 3) 
