@@ -84,23 +84,41 @@ mhm$PA <- factor(mhm$PA, order = T,     #factor() automatically drops unused lev
                               "Every day"))
 summary(mhm$PA)
 ######################## AGE ##############
+
+mhm$age_cat <- mhm$age
+
 mhm <- mhm %>%
-  mutate(age = case_when(age == "18-24" ~ "young.adult",
-                         age == "25-34" ~ "young.adult",
-                         age == "35-44" ~ "middle.adult",
-                         age == "45-54" ~ "middle.adult",
-                         age == "55-64" ~ "middle.adult",
-                         age == "65-74" ~ "senior",
-                         age == "75-84" ~ "senior",
-                         age == "85+"   ~ "senior"
+  mutate(age_cat = case_when(age_cat == "18-24" ~ "young.adult",
+                         age_cat == "25-34" ~ "young.adult",
+                         age_cat == "35-44" ~ "middle.adult",
+                         age_cat == "45-54" ~ "middle.adult",
+                         age_cat == "55-64" ~ "middle.adult",
+                         age_cat == "65-74" ~ "senior",
+                         age_cat == "75-84" ~ "senior",
+                         age_cat == "85+"   ~ "senior"
                          ))
 
-mhm$age <- factor(mhm$age, order = T,
+mhm$age_cat <- factor(mhm$age_cat, order = T,
                   levels = c("young.adult",
                              "middle.adult",
                              "senior"))
 
+summary(mhm$age_cat)
+
+################################
 summary(mhm$age)
+mhm$age <- factor(mhm$age, order = T,
+                  levels = c("18-24",
+                             "25-34",
+                             "35-44",
+                             "45-54",
+                             "55-64",
+                             "65-74",
+                             "75-84",
+                             "85+"))
+
+summary(mhm$age)
+
 ###################### SEX AND GENDER DIFF ###############
 mhm$sex <- factor(mhm$sex, order = F)
 summary(mhm$sex)        
@@ -194,13 +212,25 @@ summary(mhm$adulttrauma)
 
 
 
-
+############# plot missingness
 gg_miss_var(mhm, show_pct = TRUE)
 
+
+############# return percent of missingness
+percentmiss <- function(x){
+  sum(is.na(x)) / length(x) * 100} 
+
+apply(mhm, 2, percentmiss)   ####percent missingness per col
+table(apply(mhm, 1, percentmiss))  ###number of subjects with missing values by percent 
+
+
+##############
 mhm <- mhm %>%
-  subset(select = -c(ethnicity, genderdiff))
+  subset(select = -c(ethnicity, mhdiagnosis))
 
-
+###### drop due to missingness
+###### effects of ethnicity may be somewhat attenuated by country nesting
+###### mhdiagnosis is redundant with mhseeking, drop
 
 
 ##########################                 #####################
@@ -244,7 +274,8 @@ predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
 
 
 impMethod <- make.method(data = impute, defaultMethod = "pmm")
-impMethod[c("sex")] <- "polyreg"                 
+impMethod[c("sex")] <- "polyreg"      
+impMethod[c("genderdiff")] <- "logreg"
 impMethod[c("education")] <- "polyreg"
 impMethod[c("relationship")] <- "polyreg"
 impMethod[c("meddiagnosis")] <- "logreg"
@@ -310,9 +341,10 @@ library(knitr)
 # If specified, estimand will automatically be set to "ATT".
 
 
-weightdat_multi_att <-weightthem(PA ~   #pa*age
+weightdat_multi_att <-weightthem(PA ~   
                        age   
                      + sex
+                     + genderdiff
                      + education
                      + employment
                      + relationship
@@ -327,15 +359,16 @@ weightdat_multi_att <-weightthem(PA ~   #pa*age
                                    #and weighting observations based on them 
            method = "cbps",        #covariate balancing PS
            estimand = "ATT",
-           focal = "Few days a week") 
+           focal = "Rarely/Never") 
 
 save(weightdat_multi_att, file = "weightdat_multi_att.RData")
 
 load("weightdat_multi_att.RData")
 
 
-# love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = "m",
-#           thresholds = c(.10, .05)) + theme(legend.position = "top")
+
+love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = "m",
+           thresholds = c(.10, .05)) + theme(legend.position = "top")
 
 
 
@@ -347,9 +380,9 @@ load("weightdat_multi_att.RData")
 des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
 
 #  double robust analysis
-mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
-                             + PA   #pa*age
-                             + age
+system.time(
+  mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
+                               PA*age
                              + sex
                              + education
                              + employment
@@ -361,7 +394,7 @@ mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~
                              + childtrauma
                              + adulttrauma,
                                          design = des_multi_att,
-                                         family = gaussian())) 
+                                         family = gaussian())) )
 
 kable(summary(pool(mhq_multi_att)),
       digits = 3) 
@@ -371,30 +404,6 @@ kable(summary(pool(mhq_multi_att)),
 
 
 ##################################################################
-
-
-system.time(weightdat_multi_ate <-weightthem(PA ~
-                         age
-                       + sex
-                       + education
-                       + employment
-                       + relationship
-                       + socialize
-                       + sleep
-                       + meddiagnosis
-                       + mhseeking
-                       + childtrauma
-                       + adulttrauma,
-                       imp, 
-                       approach = 'within',    
-                       method = "cbps",       
-                       estimand = "ATE"))
-
-
-
-
-
-
 
 
 
