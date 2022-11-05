@@ -56,16 +56,16 @@ dat1 <- dat1 %>%                    #add and rename relevant variables to new df
                )
 
 ##################### REMOVE BLANKS AND NAs ##############
-sum(dat1 == "Prefer not to say")
-sum(dat1 == "")
+# sum(dat1 == "Prefer not to say")
+# sum(dat1 == "")
 dat1[dat1 == "Prefer not to say"] <- NA 
 dat1[dat1 == ""] <- NA
 sum(is.na(dat1))
 
 mhm <- dat1
 
-library(naniar)
-gg_miss_var(mhm, show_pct = TRUE)
+# library(naniar)
+# gg_miss_var(mhm, show_pct = TRUE)
 
 ######################### PHYSICAL ACTIVITY ###############
 # only keep english responses, removes 2 rows which had arabic or something
@@ -84,8 +84,6 @@ mhm$PA <- factor(mhm$PA, order = F,     #factor() automatically drops unused lev
                               "Every day"))
 
 
-
-mhm$PAint <- as.integer(mhm$PA)
 
 summary(mhm$PA)
 ######################## AGE ##############
