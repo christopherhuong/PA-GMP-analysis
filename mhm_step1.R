@@ -5,7 +5,7 @@ library(tidyverse)
 
 
 # ### CHRIS LAB COMP
-dat3 <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
+# dat3 <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
 # ### CHRIS HOME COMP
 # dat <- read.csv("C:/Users/Chris/OneDrive/Documents/INCH/MHM/mhm_data_2022-10-14_14-49-18.csv")
 
@@ -76,48 +76,41 @@ mhm <- mhm %>%
            PA == "Once a week" |
            PA == "Rarely/Never")
 
-mhm$PA <- factor(mhm$PA, order = T,     #factor() automatically drops unused levels
+mhm$PA <- factor(mhm$PA, order = F,     #factor() automatically drops unused levels
                    levels = c("Rarely/Never", 
                               "Less than once a week",
                               "Once a week",
                               "Few days a week",
                               "Every day"))
+
+
+
+mhm$PAint <- as.integer(mhm$PA)
+
 summary(mhm$PA)
 ######################## AGE ##############
 
-mhm$age_cat <- mhm$age
 
 mhm <- mhm %>%
-  mutate(age_cat = case_when(age_cat == "18-24" ~ "young.adult",
-                         age_cat == "25-34" ~ "young.adult",
-                         age_cat == "35-44" ~ "middle.adult",
-                         age_cat == "45-54" ~ "middle.adult",
-                         age_cat == "55-64" ~ "middle.adult",
-                         age_cat == "65-74" ~ "senior",
-                         age_cat == "75-84" ~ "senior",
-                         age_cat == "85+"   ~ "senior"
+  mutate(age = case_when(age == "18-24" ~ "young.adult",
+                         age == "25-34" ~ "early.adult",
+                         age == "35-44" ~ "middle.adult",
+                         age == "45-54" ~ "middle.adult",
+                         age == "55-64" ~ "middle.adult",
+                         age == "65-74" ~ "senior",
+                         age == "75-84" ~ "senior",
+                         age == "85+"   ~ "senior"
                          ))
 
-mhm$age_cat <- factor(mhm$age_cat, order = T,
+mhm$age <- factor(mhm$age, order = F,
                   levels = c("young.adult",
+                             "early.adult",
                              "middle.adult",
                              "senior"))
 
-summary(mhm$age_cat)
+summary(mhm$age)
 
 ################################
-summary(mhm$age)
-mhm$age <- factor(mhm$age, order = T,
-                  levels = c("18-24",
-                             "25-34",
-                             "35-44",
-                             "45-54",
-                             "55-64",
-                             "65-74",
-                             "75-84",
-                             "85+"))
-
-summary(mhm$age)
 
 ###################### SEX AND GENDER DIFF ###############
 mhm$sex <- factor(mhm$sex, order = F)
@@ -169,7 +162,7 @@ mhm$relationship <- factor(mhm$relationship, order = F)
 summary(mhm$relationship)
 ######################## SOCIALIZE AND SLEEP  ############
 table(mhm$socialize)
-mhm$socialize <- factor(mhm$socialize, order = T,
+mhm$socialize <- factor(mhm$socialize, order = F,
                         levels = c("Rarely/Never",
                                    "1-3 times a month",
                                    "Once a week",
@@ -177,7 +170,7 @@ mhm$socialize <- factor(mhm$socialize, order = T,
 summary(mhm$socialize)
 
 table(mhm$sleep)
-mhm$sleep <- factor(mhm$sleep, order = T,
+mhm$sleep <- factor(mhm$sleep, order = F,
                     levels = c("Hardly ever",
                                "Some of the time",
                                "Most of the time",
@@ -253,8 +246,6 @@ library(miceadds)
 
 
 
-library(mice)
-
 
 
 
@@ -285,16 +276,14 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 
 
-# system.time(imp <- mice(impute, method = impMethod,
-#                  predictorMatrix = predMatrix,
-#                  maxit = 5,
-#                  m = 5,
-#                  seed = 123))
+imp_unord <- mice(impute, method = impMethod,
+                 predictorMatrix = predMatrix,
+                 maxit = 5,
+                 m = 5,
+                 seed = 1234)
 
-# user   system   elapsed 
-# 2095.93   95.17 2204.45 
 
-#save(imp, file = "imp.RData")
+save(imp_unord, file = "imp_unord.RData")
 
 load("imp.RData")
 
@@ -311,12 +300,12 @@ floor(runif(1, min=0, max=5))
 imp_full.4 <- complete(imp,4)
 summary(imp_full.4)
 
-imp_long <- complete(imp, action = 'long', include = TRUE)
+imp_long_unord <- complete(imp_unord, action = 'long', include = TRUE)
 
 
-save(imp_long, file = "imp_long.RData")
+save(imp_long_unord, file = "imp_long_unord.RData")
 
-load("imp_long.RData")
+load("imp_long_unord.RData")
 
 
 
@@ -345,7 +334,6 @@ library(knitr)
 system.time(
   weightdat_multi_att <-weightthem(PA ~   
                        age
-                     + age_cat
                      + sex
                      + genderdiff
                      + education
@@ -357,20 +345,24 @@ system.time(
                      + mhseeking
                      + childtrauma
                      + adulttrauma,
-           imp, 
+           imp_unord, 
            approach = 'within',    #calculating distance measures within each imputed dataset
                                    #and weighting observations based on them 
            method = "cbps",        #covariate balancing PS
            estimand = "ATT",
            focal = "Rarely/Never") )
 
-save(weightdat_multi_att, file = "weightdat_multi_att.RData")
+save(weightdat_multi_att, file = "weightdat_multi_att_unord.RData")
 
 load("weightdat_multi_att.RData")
 
 
+# Estimating weights     | dataset: #1 #2 #3 #4 #5
+#   user   system  elapsed 
+# 15795.15  3972.10 19863.71
 
-love.plot(weightdat_multi_att, binary = "std", var.order = "un", stats = "m",
+
+love.plot(weightdat_multi_att_unord, binary = "std", var.order = "un", stats = "m",
            thresholds = c(.10, .05)) + theme(legend.position = "top")
 
 

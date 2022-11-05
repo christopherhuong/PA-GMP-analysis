@@ -1,3 +1,5 @@
+hello
+
  weightdat_multi_att <-weightthem(PA ~   
                        age   
                      + sex
