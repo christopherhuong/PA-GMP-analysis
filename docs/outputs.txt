@@ -82,4 +82,93 @@ mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~
 |mhseekingYes                                                 |  -25.862|     0.354|   -73.114|  76107.557|   0.000|
 |childtraumaYes                                               |  -13.883|     0.260|   -53.312|   4354.240|   0.000|
 |adulttraumaYes                                               |   -6.495|     0.293|   -22.145|   1767.685|   0.000|
+
+
+
+
+
+
+
+
+
+
+
+
+
+ summary(lm(dat$Overall.MHQ ~ dat$Age))
+
+Call:
+lm(formula = dat$Overall.MHQ ~ dat$Age)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-281.559  -50.077    7.736   52.002  177.927 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   22.0731     0.2650   83.28   <2e-16 ***
+dat$Age25-34  23.4246     0.4061   57.68   <2e-16 ***
+dat$Age35-44  42.6092     0.3887  109.63   <2e-16 ***
+dat$Age45-54  58.1556     0.3851  151.00   <2e-16 ***
+dat$Age55-64  70.5912     0.3755  187.97   <2e-16 ***
+dat$Age65-74  80.9036     0.4236  191.00   <2e-16 ***
+dat$Age75-84  89.0472     0.6640  134.12   <2e-16 ***
+dat$Age85+    93.0859     1.7436   53.39   <2e-16 ***
+
+
+
+
+
+
+
+ Ord.factor w/ 8 levels "18-24"<"25-34"<..: 2 2 8 3 4 4 5 2 1 5 ...
+> summary(lm(dat$Overall.MHQ ~ dat$Age))
+
+Call:
+lm(formula = dat$Overall.MHQ ~ dat$Age)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-281.559  -50.077    7.736   52.002  177.927 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  79.30024    0.24508 323.566   <2e-16 ***
+dat$Age.L    85.40944    0.98335  86.856   <2e-16 ***
+dat$Age.Q   -19.30330    0.96009 -20.106   <2e-16 ***
+dat$Age.C     1.11523    0.80539   1.385    0.166    
+dat$Age^4    -0.90050    0.62595  -1.439    0.150    
+dat$Age^5    -0.43174    0.47051  -0.918    0.359    
+dat$Age^6    -0.08566    0.35773  -0.239    0.811    
+dat$Age^7     0.04549    0.29169   0.156    0.876    
+
+
+
+
+
+Call:
+lm(formula = Overall.MHQ ~ Age, data = dat, contrasts = list(Age = "contr.treatment"))
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-281.559  -50.077    7.736   52.002  177.927 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  22.0731     0.2650   83.28   <2e-16 ***
+Age25-34     23.4246     0.4061   57.68   <2e-16 ***
+Age35-44     42.6092     0.3887  109.63   <2e-16 ***
+Age45-54     58.1556     0.3851  151.00   <2e-16 ***
+Age55-64     70.5912     0.3755  187.97   <2e-16 ***
+Age65-74     80.9036     0.4236  191.00   <2e-16 ***
+Age75-84     89.0472     0.6640  134.12   <2e-16 ***
+Age85+       93.0859     1.7436   53.39   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 66.54 on 337842 degrees of freedom
+Multiple R-squared:  0.1571,	Adjusted R-squared:  0.1571 
+F-statistic:  8998 on 7 and 337842 DF,  p-value: < 2.2e-16
+
+
 > 
