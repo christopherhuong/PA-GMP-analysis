@@ -1,11 +1,15 @@
 
-
+library(MatchThem) 
+library(survey) 
+library(CBPS)
+library(cobalt)
+library(knitr)
 
 #load in multiply imputed, weighted data
 #multinomial treatment = PA, focal = "Rarely/never"
 #estimand = ATT, approach = "within", method = cbps
 load("weightdat_multi_att.RData")   
-
+load("imp_long.RData")
 ############ SURVEY DESIGN 
 #
 des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long) 
@@ -16,8 +20,7 @@ des_multi_att <- svydesign(ids = ~country, weights = ~1, data = imp_long)
 #  double robust analysis
 mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
                                                    PA
-                                                 + age_cat
-                                                 + PA:age_cat
+                                                 + age #hasnt age_cat been balanced?
                                                  + sex
                                                  + genderdiff
                                                  + education
@@ -31,6 +34,18 @@ mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~
                                                  + adulttrauma,
                                                  design = des_multi_att,
                                                  family = gaussian())) 
+
+
+
+mhq_multi_att <-with(weightdat_multi_att, svyglm(mhq ~ 
+                                                   PA,
+                                                 
+                                                 design = des_multi_att,
+                                                 family = gaussian())) 
+
+
+#similar coefficients, different intercept
+
 
 kable(summary(pool(mhq_multi_att)),
       digits = 3) 
