@@ -1,7 +1,8 @@
+library(tidyverse)
 library(MatchThem) 
 library(survey) 
 library(knitr)
-library(car)
+
 library(mice)
 library(miceadds)
 #load in multiply imputed, weighted data
@@ -23,27 +24,92 @@ des_multi_att_unord <- svydesign(ids = ~country, weights = ~1,
 
 
 
-mhq_multi_att_unord <-with(weightdat_multi_att_unord, svyglm(mhq ~ 
+mhq_multi_att_unord <-with(weightdat_multi_att_unord, svyglm(mhq ~ -1 +
                                                    PA,
                                                  
                                                  design = des_multi_att,
+                                                 
                                                  family = gaussian())) 
 
 
 
-kable(summary(pool(mhq_multi_att_unord)),
+mhqpool <- pool(mhq_multi_att_unord)
+
+kable(summary(mhqpool),
       digits = 3) 
 
 
-mitml::testModels(model=mod1$analyses, null.model=mod0$analyses, method="D1")
-mitml::testModels(model=mod1$analyses, null.model=mod0$analyses, method="D2")
+library(jtools)
+
+
+summ(mhq_multi_att_unord[["analyses"]][[1]])
 
 
 
-aov <- with(weightdat_multi_att_unord, aov(mhq ~ PA))
 
-kable(summary(MatchThem::pool(aov)),
-      digits = 3)
+
+plot_summs(mhq_multi_att_unord[["analyses"]][[1]],
+           mhq_multi_att_unord[["analyses"]][[2]],
+           mhq_multi_att_unord[["analyses"]][[3]],
+           mhq_multi_att_unord[["analyses"]][[4]],
+           mhq_multi_att_unord[["analyses"]][[5]]
+           
+         )
+
+################################################
+library(interactions)
+
+
+
+
+mhq_multi_att_unord <-with(weightdat_multi_att_unord, svyglm(mhq ~ 
+                                                               PA*age,
+                                                             
+                                                             design = des_multi_att,
+                                                             
+                                                             family = gaussian())) 
+
+
+
+
+cat_plot(mhq_multi_att_unord[["analyses"]][[1]],
+         pred = PA, modx = age,
+         geom = "line")
+         
+
+##################
+
+
+
+mhq_multi_att_unord <-with(weightdat_multi_att_unord, svyglm(mhq ~ 
+                                                               PA*sex*age,
+                                                             
+                                                             design = des_multi_att,
+                                                             
+                                                             family = gaussian())) 
+
+
+
+
+cat_plot(mhq_multi_att_unord[["analyses"]][[1]],
+         pred = PA, modx = sex, mod2 = age,
+         geom = "line")
+
+
+
+########################################################
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
