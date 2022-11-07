@@ -9,7 +9,7 @@ library(miceadds)
 #multinomial treatment = PA, focal = "Rarely/never"
 #estimand = ATT, approach = "within", method = cbps
 load("weightdat_multi_att_unord.RData")   
-load("imp_unord.RData")
+# load("imp_unord.RData")
 load("imp_long_unord.RData")
 ############ SURVEY DESIGN 
 #
@@ -21,6 +21,7 @@ des_multi_att_unord <- svydesign(ids = ~country, weights = ~1,
 #can remove all covariates from svyglm since they are balanced already?
 
 # cannot do interaction effect with a covariate(age) because it was balanced?
+# instead, split mice & cbps for different groups of interest
 
 
 
@@ -40,7 +41,7 @@ kable(summary(mhqpool),
 
 
 library(jtools)
-
+library(broom.mixed)
 
 summ(mhq_multi_att_unord[["analyses"]][[1]])
 
@@ -97,11 +98,11 @@ cat_plot(mhq_multi_att_unord[["analyses"]][[1]],
 
 
 
+with(mhq_multi_att_unord[["analyses"]], cat_plot(pred = PA, modx = sex, mod2 = age,
+                                  geom = "line"))
+
+
 ########################################################
-
-
-
-
 
 
 
