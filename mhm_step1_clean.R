@@ -1,9 +1,3 @@
-library(tidyverse)
-
-
-#diagnosis of MH disorder
-
-
 # ### CHRIS LAB COMP
 # dat3 <- read.csv("C:/Users/shg100/Documents/INCH/MHM_PA/mhm_data_2022-10-14_14-49-18.csv")
 # ### CHRIS HOME COMP
@@ -11,6 +5,8 @@ library(tidyverse)
 
 
 #save(dat, file = "dat.RData")
+library(tidyverse)
+
 load("dat.RData")
 
 
@@ -22,7 +18,7 @@ load("dat.RData")
 #########################               #################
 
 dat$id <- 1:nrow(dat)
-
+##################
 
 
 
@@ -55,26 +51,34 @@ dat1 <- dat1 %>%                    #add and rename relevant variables to new df
               adulttrauma = dat$Adult.traumas
                )
 
-##################### REMOVE BLANKS AND NAs ##############
-# sum(dat1 == "Prefer not to say")
-# sum(dat1 == "")
-dat1[dat1 == "Prefer not to say"] <- NA 
-dat1[dat1 == ""] <- NA
-sum(is.na(dat1))
+##############
 
 mhm <- dat1
 
-# library(naniar)
-# gg_miss_var(mhm, show_pct = TRUE)
+library(naniar)
+gg_miss_var(mhm, show_pct = TRUE)
+
+
+mhm <- mhm %>%
+  subset(select = -c(ethnicity, mhdiagnosis))
+
+###### drop due to missingness
+###### effects of ethnicity may be somewhat attenuated by country nesting
+###### mhdiagnosis is redundant with mhseeking, drop
+##################### REMOVE BLANKS AND NAs ##############
 
 ######################### PHYSICAL ACTIVITY ###############
 # only keep english responses, removes 2 rows which had arabic or something
+summary(mhm$PA)
+
 mhm <- mhm %>%
   subset(PA == "Every day" |
            PA == "Few days a week" |
            PA == "Less than once a week" |
            PA == "Once a week" |
            PA == "Rarely/Never")
+
+#dropped 2 rows
 
 mhm$PA <- factor(mhm$PA, order = F,     #factor() automatically drops unused levels
                    levels = c("Rarely/Never", 
@@ -87,7 +91,7 @@ mhm$PA <- factor(mhm$PA, order = F,     #factor() automatically drops unused lev
 
 summary(mhm$PA)
 ######################## AGE ##############
-
+summary(mhm$age)
 
 mhm <- mhm %>%
   mutate(age = case_when(age == "18-24" ~ "young.adult",
@@ -111,30 +115,37 @@ summary(mhm$age)
 ################################
 
 ###################### SEX AND GENDER DIFF ###############
+summary(mhm$sex)
+
+mhm <- mhm %>%
+  subset(sex != "Other/Intersex" )
+
 mhm$sex <- factor(mhm$sex, order = F)
 summary(mhm$sex)        
+
+
+
 
 mhm$genderdiff <- factor(mhm$genderdiff, order = F)
 summary(mhm$genderdiff)
 
-##################### COUNTRY AND ETHNICITY ###########
+##################### COUNTRY ###########
 mhm$country <- factor(mhm$country, order = F)
 summary(mhm$country)
 
-table(mhm$ethnicity)
-mhm$ethnicity <- factor(mhm$ethnicity)
-summary(mhm$ethnicity)
+
+
 ################### EDUCATION ##########
-table(mhm$education)   ####### WHAT IS "Médio completo" ?????
+summary(mhm$education)   ####### WHAT IS "Médio completo" ?????
 mhm <- mhm %>%              
 mutate(education = case_when(education == "Primary Education" ~ "less.hs",
                              education == "Some High School" ~ "less.hs",
-                             education == "Médio completo" ~ "less.hs",
+                             education == "MÃ©dio completo" ~ "less.hs",
                              education == "High School" ~ "hs",
-                             education == "Ensino técnico" ~ "vocational",
+                             education == "Ensino tÃ©cnico" ~ "vocational",
                              education == "Ensino profissionalizante" ~ "vocational",
                              education == "Vocational certification" ~ "vocational",
-                             education == "Associate’s Degree" ~ "assoc.deg",
+                             education == "Associateâ€™s Degree" ~ "assoc.deg",
                              education == "Bachelor's Degree" ~ "bach.deg",
                              education == "Master's Degree" ~ "grad.deg",
                              education == "PhD" ~ "grad.deg",
@@ -142,10 +153,14 @@ mutate(education = case_when(education == "Primary Education" ~ "less.hs",
                              education == "J.D. (Direito)" ~ "grad.deg",
                              education == "M.D." ~ "grad.deg",
                              education == "M.D. (Medicina)" ~ "grad.deg",
-                             education == "Other" ~ "other"))
+                             education == "Other" ~ "other",
+                             education == "Prefer not to say" ~ "Prefer not to say"))
+
+table(mhm$education)
+
+
 
 mhm$education[mhm$education == "other"] <- NA
-
 mhm$education <- factor(mhm$education, order = F)
 
 summary(mhm$education)
@@ -180,14 +195,13 @@ mhm$meddiagnosis <- factor(mhm$meddiagnosis, order = F)
 summary(mhm$meddiagnosis)
 
 
-########################## MH SEEKING AND MH DIAGNOSIS ############
+########################## MH SEEKING  ############
 table(mhm$mhseeking)
 mhm$mhseeking <- factor(mhm$mhseeking, order = F)
 summary(mhm$mhseeking)
 
-table(mhm$mhdiagnosis)
-mhm$mhdiagnosis <- factor(mhm$mhdiagnosis, order = F)
-summary(mhm$mhdiagnosis)
+
+
 ##################### TRAUMAS ############  should we combine??
 mhm$childtrauma <- 
   if_else((mhm$childtrauma == "|I did not experience any of the above during my childhood")|(mhm$childtrauma == "|None of the above"), 
@@ -202,8 +216,19 @@ mhm$adulttrauma <- as.factor(mhm$adulttrauma)
 summary(mhm$adulttrauma)
 
 
+##############
+
+
+mhm[mhm == "Prefer not to say"] <- NA 
+mhm[mhm == ""] <- NA
+sum(is.na(mhm))
+
+mhm <- droplevels(mhm)
+
+summary(mhm)
 
 ############# plot missingness
+library(naniar)
 gg_miss_var(mhm, show_pct = TRUE)
 
 
@@ -215,13 +240,7 @@ apply(mhm, 2, percentmiss)   ####percent missingness per col
 table(apply(mhm, 1, percentmiss))  ###number of subjects with missing values by percent 
 
 
-##############
-mhm <- mhm %>%
-  subset(select = -c(ethnicity, mhdiagnosis))
 
-###### drop due to missingness
-###### effects of ethnicity may be somewhat attenuated by country nesting
-###### mhdiagnosis is redundant with mhseeking, drop
 
 
 ##########################                 #####################
@@ -249,6 +268,9 @@ library(miceadds)
 
 impute <- mhm
 impute$country <- as.integer(impute$country)
+
+
+
 summary(impute)
 
 
@@ -274,36 +296,34 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 
 
-imp_unord <- mice(impute, method = impMethod,
+imp_overall <- mice(impute, method = impMethod,
                  predictorMatrix = predMatrix,
                  maxit = 5,
                  m = 5,
                  seed = 1234)
 
 
-save(imp_unord, file = "imp_unord.RData")
+save(imp_overall, file = "imp_overall.RData")
 
 
 
 
 
-densityplot(imp)
-plot(imp)
-View(complete(imp,2))
-summary(complete(imp,1))
+densityplot(imp_overall)
+plot(imp_overall)
+View(complete(imp_overall,2))
+summary(complete(imp_overall,1))
 
 #randomly select 1 dataset for plotting purposes
 floor(runif(1, min=0, max=5))
 #[1] 4
-imp_full.4 <- complete(imp,4)
+imp_full.4 <- complete(imp_overall,4)
 summary(imp_full.4)
 
-imp_long_unord <- complete(imp_unord, action = 'long', include = TRUE)
+imp_overall_long <- complete(imp_overall_long, action = 'long', include = TRUE)
 
 
-save(imp_long_unord, file = "imp_long_unord.RData")
-
-load("imp_long_unord.RData")
+save(imp_overall_long, file = "imp_overall_long.RData")
 
 
 
@@ -329,8 +349,8 @@ library(knitr)
 # If specified, estimand will automatically be set to "ATT".
 
 
-system.time(
-  weightdat_multi_att <-weightthem(PA ~   
+
+weightdat_overall <- weightthem(PA ~   
                        age
                      + sex
                      + genderdiff
@@ -343,24 +363,20 @@ system.time(
                      + mhseeking
                      + childtrauma
                      + adulttrauma,
-           imp_unord, 
+           imp_overall, 
            approach = 'within',    #calculating distance measures within each imputed dataset
                                    #and weighting observations based on them 
            method = "cbps",        #covariate balancing PS
            estimand = "ATT",
-           focal = "Rarely/Never") )
+           focal = "Rarely/Never") 
 
-save(weightdat_multi_att_ord, file = "weightdat_multi_att_ord.RData")
-
-load("weightdat_multi_att.RData")
+save(weightdat_overall, file = "weightdat_overall.RData")
 
 
-# Estimating weights     | dataset: #1 #2 #3 #4 #5
-#   user   system  elapsed 
-# 15795.15  3972.10 19863.71
 
 
-love.plot(weightdat_multi_att_unord, binary = "std", var.order = "un", stats = "m",
+
+love.plot(weightdat_overall, binary = "std", var.order = "un", stats = "m",
            thresholds = c(.10, .05)) + theme(legend.position = "top")
 
 
@@ -368,15 +384,77 @@ love.plot(weightdat_multi_att_unord, binary = "std", var.order = "un", stats = "
 
 
 
-##################################################################
+###################### WEIGHTING PA*AGE*MHSEEK INTERACTIONS ############################################
+
+############# SPLIT SAMPLE BY SEX
+
+imp_female_long <- imp_overall_long %>%
+                subset(sex == "Female")
+
+imp_female <- as.mids(imp_female_long, .imp = ".imp", .id = ".id")
+
+####
+
+imp_male_long <- imp_overall_long %>%
+  subset(sex == "Male")
+
+imp_male <- as.mids(imp_male_long, .imp = ".imp", .id = ".id")
+
+#########################################
+
+
+weightdat_female <- weightthem(PA*age*mhseeking ~   
+                                  
+                                + sex
+                                + genderdiff
+                                + education
+                                + employment
+                                + relationship
+                                + socialize
+                                + sleep
+                                + meddiagnosis
+                                + childtrauma
+                                + adulttrauma,
+                                imp_female, 
+                                approach = 'within',  
+                                method = "cbps",        
+                                estimand = "ATT",
+                                focal = "Rarely/Never") 
+
+save(weightdat_female, file = "weightdat_female.RData")
 
 
 
+love.plot(weightdat_female, binary = "std", var.order = "un", stats = "m",
+          thresholds = c(.10, .05)) + theme(legend.position = "top")
+
+
+######################
+
+weightdat_male <- weightthem(PA*age*mhseeking ~   
+                                 
+                               + sex
+                               + genderdiff
+                               + education
+                               + employment
+                               + relationship
+                               + socialize
+                               + sleep
+                               + meddiagnosis
+                               + childtrauma
+                               + adulttrauma,
+                               imp_male, 
+                               approach = 'within',  
+                               method = "cbps",        
+                               estimand = "ATT",
+                               focal = "Rarely/Never") 
+
+save(weightdat_male, file = "weightdat_male.RData")
 
 
 
-
-
+love.plot(weightdat_male, binary = "std", var.order = "un", stats = "m",
+          thresholds = c(.10, .05)) + theme(legend.position = "top")
 
 
 
