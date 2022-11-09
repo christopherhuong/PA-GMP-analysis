@@ -1,0 +1,83 @@
+
+ summary(mhm)
+       id              mhq               cog            adaptresil        drivemotiv       moodoutlook     
+ Min.   :     1   Min.   :-166.40   Min.   :-100.00   Min.   :-100.00   Min.   :-100.00   Min.   :-100.00  
+ 1st Qu.: 85497   1st Qu.:  -0.30   1st Qu.:  20.70   1st Qu.:  43.90   1st Qu.:  31.00   1st Qu.:  -2.90  
+ Median :171003   Median :  79.30   Median :  93.50   Median : 104.90   Median :  94.30   Median :  73.70  
+ Mean   :170994   Mean   :  68.02   Mean   :  81.52   Mean   :  89.87   Mean   :  83.45   Mean   :  67.27  
+ 3rd Qu.:256509   3rd Qu.: 128.70   3rd Qu.: 137.30   3rd Qu.: 143.90   3rd Qu.: 137.90   3rd Qu.: 128.80  
+ Max.   :341958   Max.   : 200.00   Max.   : 200.00   Max.   : 200.00   Max.   : 200.00   Max.   : 200.00  
+                                                                                                           
+   socialself         mindbody                           PA                   age             sex        
+ Min.   :-100.00   Min.   :-100.00   Rarely/Never         :135181   young.adult : 64380   Female:189226  
+ 1st Qu.:  -5.20   1st Qu.:  20.50   Less than once a week: 45743   early.adult : 47186   Male  :148624  
+ Median :  83.90   Median :  84.10   Once a week          : 30186   middle.adult:175222   NA's  :  3287  
+ Mean   :  70.74   Mean   :  73.49   Few days a week      : 85688   senior      : 54349                  
+ 3rd Qu.: 138.70   3rd Qu.: 124.10   Every day            : 44339                                        
+ Max.   : 200.00   Max.   : 200.00                                                                       
+                                                                                                         
+ genderdiff             country            education                        employment    
+ No  :101324   Egypt        : 23181   assoc.deg : 21210   Employed /Self employed:163084  
+ Yes :  5286   United States: 21449   bach.deg  :105540   Homemaker              : 31508  
+ NA's:234527   Mexico       : 20099   grad.deg  : 56645   Not able to work       :  7168  
+               India        : 19017   hs        : 77247   Retired                : 61215  
+               Brazil       : 13954   less.hs   : 33897   Studying               : 48392  
+               Algeria      : 13384   vocational: 21788   Unemployed             : 29770  
+               (Other)      :230053   NA's      : 24810                                   
+                                           relationship                  socialize     
+ Divorced/Separated                              : 32404   Rarely/Never       : 85975  
+ In a cohabiting relationship                    : 15341   1-3 times a month  : 79293  
+ In a relationship                               : 31947   Once a week        : 63250  
+ Married/Civil Partnership                       :144918   Several days a week:112619  
+ Single (never married or in a civil partnership): 84892                               
+ Widowed                                         : 14702                               
+ NA's                                            : 16933                               
+              sleep        meddiagnosis  mhseeking     childtrauma  adulttrauma 
+ Hardly ever     : 42107   No  :280131   No  :286935   No :130785   No : 88933  
+ Some of the time:117652   Yes : 52970   Yes : 50400   Yes:210352   Yes:252204  
+ Most of the time:139853   NA's:  8036   NA's:  3802                            
+ All of the time : 41525                                                        
+                                
+
+
+
+
+
+
+
+
+
+
+
+
+
+percent missingness by variable
+
+|             |      x|
+|:------------|------:|
+|id           |  0.000|
+|mhq          |  0.000|
+|cog          |  0.000|
+|adaptresil   |  0.000|
+|drivemotiv   |  0.000|
+|moodoutlook  |  0.000|
+|socialself   |  0.000|
+|mindbody     |  0.000|
+|PA           |  0.000|
+|age          |  0.000|
+|sex          |  0.964|
+|genderdiff   | 68.749|
+|country      |  0.000|
+|ethnicity    | 84.209|
+|education    |  7.273|
+|employment   |  0.000|
+|relationship |  4.964|
+|socialize    |  0.000|
+|sleep        |  0.000|
+|meddiagnosis |  2.356|
+|mhseeking    |  1.115|
+|mhdiagnosis  | 85.252|
+|childtrauma  |  0.000|
+|adulttrauma  |  0.000|
+
+

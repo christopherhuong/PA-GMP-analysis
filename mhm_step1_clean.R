@@ -236,8 +236,10 @@ gg_miss_var(mhm, show_pct = TRUE)
 percentmiss <- function(x){
   sum(is.na(x)) / length(x) * 100} 
 
-apply(mhm, 2, percentmiss)   ####percent missingness per col
-table(apply(mhm, 1, percentmiss))  ###number of subjects with missing values by percent 
+kable(apply(mhm, 2, percentmiss),
+      digits = 3)   ####percent missingness per col
+kable(table(apply(mhm, 1, percentmiss)),
+      digits = 3)###number of subjects with missing values by percent 
 
 
 
@@ -306,21 +308,21 @@ imp_overall <- mice(impute, method = impMethod,
 save(imp_overall, file = "imp_overall.RData")
 
 
+# 
+# 
+# 
+# densityplot(imp_overall)
+# plot(imp_overall)
+# View(complete(imp_overall,2))
+# summary(complete(imp_overall,1))
+# 
+# #randomly select 1 dataset for plotting purposes
+# floor(runif(1, min=0, max=5))
+# #[1] 4
+# imp_full.4 <- complete(imp_overall,4)
+# summary(imp_full.4)
 
-
-
-densityplot(imp_overall)
-plot(imp_overall)
-View(complete(imp_overall,2))
-summary(complete(imp_overall,1))
-
-#randomly select 1 dataset for plotting purposes
-floor(runif(1, min=0, max=5))
-#[1] 4
-imp_full.4 <- complete(imp_overall,4)
-summary(imp_full.4)
-
-imp_overall_long <- complete(imp_overall_long, action = 'long', include = TRUE)
+imp_overall_long <- complete(imp_overall, action = 'long', include = TRUE)
 
 
 save(imp_overall_long, file = "imp_overall_long.RData")
@@ -424,10 +426,10 @@ weightdat_female <- weightthem(PA*age*mhseeking ~
 save(weightdat_female, file = "weightdat_female.RData")
 
 
-
-love.plot(weightdat_female, binary = "std", var.order = "un", stats = "m",
-          thresholds = c(.10, .05)) + theme(legend.position = "top")
-
+# 
+# love.plot(weightdat_female, binary = "std", var.order = "un", stats = "m",
+#           thresholds = c(.10, .05)) + theme(legend.position = "top")
+# 
 
 ######################
 
@@ -451,12 +453,12 @@ weightdat_male <- weightthem(PA*age*mhseeking ~
 
 save(weightdat_male, file = "weightdat_male.RData")
 
-
-
-love.plot(weightdat_male, binary = "std", var.order = "un", stats = "m",
-          thresholds = c(.10, .05)) + theme(legend.position = "top")
-
-
+# 
+# 
+# love.plot(weightdat_male, binary = "std", var.order = "un", stats = "m",
+#           thresholds = c(.10, .05)) + theme(legend.position = "top")
+# 
+# 
 
 
 
