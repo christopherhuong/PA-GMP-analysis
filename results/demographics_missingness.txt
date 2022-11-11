@@ -1,5 +1,6 @@
 
- summary(mhm)
+
+summary(mhm)
        id              mhq               cog            adaptresil        drivemotiv       moodoutlook     
  Min.   :     1   Min.   :-166.40   Min.   :-100.00   Min.   :-100.00   Min.   :-100.00   Min.   :-100.00  
  1st Qu.: 85497   1st Qu.:  -0.30   1st Qu.:  20.70   1st Qu.:  43.90   1st Qu.:  31.00   1st Qu.:  -2.90  
@@ -38,6 +39,12 @@
  Most of the time:139853   NA's:  8036   NA's:  3802                            
  All of the time : 41525                                                        
                                 
+
+
+
+
+
+
 
 
 

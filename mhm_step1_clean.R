@@ -65,7 +65,7 @@ mhm <- mhm %>%
 ###### drop due to missingness
 ###### effects of ethnicity may be somewhat attenuated by country nesting
 ###### mhdiagnosis is redundant with mhseeking, drop
-##################### REMOVE BLANKS AND NAs ##############
+
 
 ######################### PHYSICAL ACTIVITY ###############
 # only keep english responses, removes 2 rows which had arabic or something
@@ -119,6 +119,8 @@ summary(mhm$sex)
 
 mhm <- mhm %>%
   subset(sex != "Other/Intersex" )
+
+#dropped 819 rows
 
 mhm$sex <- factor(mhm$sex, order = F)
 summary(mhm$sex)        
@@ -226,6 +228,9 @@ sum(is.na(mhm))
 mhm <- droplevels(mhm)
 
 summary(mhm)
+
+save(mhm, file = "mhm.RData")
+
 
 ############# plot missingness
 library(naniar)
@@ -387,27 +392,91 @@ love.plot(weightdat_overall, binary = "std", var.order = "un", stats = "m",
 
 
 ###################### WEIGHTING PA*AGE*MHSEEK INTERACTIONS ############################################
-
+#############
 ############# SPLIT SAMPLE BY SEX
+load("mhm.Rdata")
 
-imp_female_long <- imp_overall_long %>%
-                subset(sex == "Female")
+mhm_female <- mhm %>%
+  subset(sex == "Female")
+mhm_female$country <- as.integer(mhm_female$country)
 
-imp_female <- as.mids(imp_female_long, .imp = ".imp", .id = ".id")
 
-####
+predMatrix <- quickpred(mhm_female, mincor=0.10)
+predMatrix[, c("id")] <- 0                        # id = 0
+predMatrix[, c("country")] <- -2                  # country = -2
+predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
+#In the predictor matrix, -2 denotes the class variable,
+#a value 1 indicates a fixed effect and a value 2 indicates a random effect.
 
-imp_male_long <- imp_overall_long %>%
+
+impMethod <- make.method(data = mhm_female, defaultMethod = "pmm")
+impMethod[c("genderdiff")] <- "logreg"
+impMethod[c("education")] <- "polyreg"
+impMethod[c("relationship")] <- "polyreg"
+impMethod[c("meddiagnosis")] <- "logreg"
+impMethod[c("mhseeking")] <- "logreg"
+impMethod[c("childtrauma")] <- "logreg"
+impMethod[c("adulttrauma")] <- "logreg"
+
+
+
+imp_female <- mice(mhm_female, method = impMethod,
+                    predictorMatrix = predMatrix,
+                    maxit = 5,
+                    m = 5,
+                    seed = 1234)
+
+
+save(imp_female, file = "imp_female.RData")
+
+
+
+
+
+####################  MALE
+
+mhm_male <- mhm %>%
   subset(sex == "Male")
+mhm_male$country <- as.integer(mhm_male$country)
 
-imp_male <- as.mids(imp_male_long, .imp = ".imp", .id = ".id")
 
+predMatrix <- quickpred(mhm_male, mincor=0.10)
+predMatrix[, c("id")] <- 0                        # id = 0
+predMatrix[, c("country")] <- -2                  # country = -2
+predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
+#In the predictor matrix, -2 denotes the class variable,
+#a value 1 indicates a fixed effect and a value 2 indicates a random effect.
+
+
+impMethod <- make.method(data = mhm_male, defaultMethod = "pmm")
+impMethod[c("genderdiff")] <- "logreg"
+impMethod[c("education")] <- "polyreg"
+impMethod[c("relationship")] <- "polyreg"
+impMethod[c("meddiagnosis")] <- "logreg"
+impMethod[c("mhseeking")] <- "logreg"
+impMethod[c("childtrauma")] <- "logreg"
+impMethod[c("adulttrauma")] <- "logreg"
+
+
+
+imp_male <- mice(mhm_male, method = impMethod,
+                   predictorMatrix = predMatrix,
+                   maxit = 5,
+                   m = 5,
+                   seed = 1234)
+
+
+save(imp_male, file = "imp_male.RData")
+
+
+
+###############################
+#################################### WEIGHTING INTERACTIONS
 #########################################
 
 
 weightdat_female <- weightthem(PA*age*mhseeking ~   
                                   
-                                + sex
                                 + genderdiff
                                 + education
                                 + employment
@@ -435,7 +504,6 @@ save(weightdat_female, file = "weightdat_female.RData")
 
 weightdat_male <- weightthem(PA*age*mhseeking ~   
                                  
-                               + sex
                                + genderdiff
                                + education
                                + employment
