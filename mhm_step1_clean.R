@@ -430,7 +430,10 @@ imp_female <- mice(mhm_female, method = impMethod,
 save(imp_female, file = "imp_female.RData")
 
 
+imp_female_long <- complete(imp_female, action = 'long', include = TRUE)
 
+
+save(imp_female_long, file = "imp_female_long.RData")
 
 
 ####################  MALE
@@ -468,11 +471,15 @@ imp_male <- mice(mhm_male, method = impMethod,
 
 save(imp_male, file = "imp_male.RData")
 
+imp_male_long <- complete(imp_male, action = 'long', include = TRUE)
 
+
+save(imp_male_long, file = "imp_male_long.RData")
 
 ###############################
 #################################### WEIGHTING INTERACTIONS
 #########################################
+load("imp_female.RData")
 
 
 weightdat_female <- weightthem(PA*age*mhseeking ~   
@@ -489,18 +496,26 @@ weightdat_female <- weightthem(PA*age*mhseeking ~
                                 imp_female, 
                                 approach = 'within',  
                                 method = "cbps",        
-                                estimand = "ATT",
-                                focal = "Rarely/Never") 
+                                estimand = "ATE")
 
 save(weightdat_female, file = "weightdat_female.RData")
 
 
-# 
+# Estimating weights     | dataset: #1Error: No missing values are allowed in the treatment variable.
+#   In addition: Warning messages:
+#   1: In Ops.factor(PA, age) : ‘*’ not meaningful for factors
+# 2: In Ops.factor(PA, age) : ‘*’ not meaningful for factors 
+
+
+
+
 # love.plot(weightdat_female, binary = "std", var.order = "un", stats = "m",
 #           thresholds = c(.10, .05)) + theme(legend.position = "top")
 # 
 
 ######################
+
+load("imp_male.RData")
 
 weightdat_male <- weightthem(PA*age*mhseeking ~   
                                  
