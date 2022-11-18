@@ -476,6 +476,10 @@ save(imp_male_long, file = "imp_male_long.RData")
 ###############################
 #################################### WEIGHTING INTERACTIONS
 #########################################
+
+
+
+library(MatchThem)
 load("imp_female.RData")
 
 
