@@ -93,34 +93,13 @@ summary(mhm$PA)
 ######################## AGE ##############
 summary(mhm$age)
 
-mhm <- mhm %>%
-  mutate(age = case_when(age == "18-24" ~ "young.adult",
-                         age == "25-34" ~ "early.adult",
-                         age == "35-44" ~ "middle.adult",
-                         age == "45-54" ~ "middle.adult",
-                         age == "55-64" ~ "middle.adult",
-                         age == "65-74" ~ "senior",
-                         age == "75-84" ~ "senior",
-                         age == "85+"   ~ "senior"
-                         ))
-
-mhm$age <- factor(mhm$age, order = F,
-                  levels = c("young.adult",
-                             "early.adult",
-                             "middle.adult",
-                             "senior"))
-
-summary(mhm$age)
 
 ################################
 
 ###################### SEX AND GENDER DIFF ###############
 summary(mhm$sex)
 
-mhm <- mhm %>%
-  subset(sex != "Other/Intersex" )
 
-#dropped 819 rows
 
 mhm$sex <- factor(mhm$sex, order = F)
 summary(mhm$sex)        
@@ -398,6 +377,24 @@ load("mhm.Rdata")
 
 mhm_female <- mhm %>%
   subset(sex == "Female")
+
+mhm <- mhm %>%
+  mutate(age = case_when(age == "18-24" ~ "young.adult",
+                         age == "25-34" ~ "early.adult",
+                         age == "35-44" ~ "middle.adult",
+                         age == "45-54" ~ "middle.adult",
+                         age == "55-64" ~ "middle.adult",
+                         age == "65-74" ~ "senior",
+                         age == "75-84" ~ "senior",
+                         age == "85+"   ~ "senior"
+  ))
+
+mhm$age <- factor(mhm$age, order = F,
+                  levels = c("young.adult",
+                             "early.adult",
+                             "middle.adult",
+                             "senior"))
+
 mhm_female$country <- as.integer(mhm_female$country)
 
 
