@@ -49,14 +49,14 @@ dat1 <- dat1 %>%                    #add and rename relevant variables to new df
               mhdiagnosis = dat$Diagnosed.mental.health.disorders,
               childtrauma = dat$Childhood.traumas,
               adulttrauma = dat$Adult.traumas
-               )
+  )
 
 ##############
 
 mhm <- dat1
 
 library(naniar)
-gg_miss_var(mhm, show_pct = TRUE)
+gg_miss_var(mhm, show_pct = TRUE)   # no NAs due to missingness = " " in dataframe
 
 
 mhm <- mhm %>%
@@ -81,17 +81,19 @@ mhm <- mhm %>%
 #dropped 2 rows
 
 mhm$PA <- factor(mhm$PA, order = F,     #factor() automatically drops unused levels
-                   levels = c("Rarely/Never", 
-                              "Less than once a week",
-                              "Once a week",
-                              "Few days a week",
-                              "Every day"))
+                 levels = c("Rarely/Never", 
+                            "Less than once a week",
+                            "Once a week",
+                            "Few days a week",
+                            "Every day"))
 
 
 
 summary(mhm$PA)
 ######################## AGE ##############
 summary(mhm$age)
+str(mhm$age)
+
 
 
 ################################
@@ -100,6 +102,8 @@ summary(mhm$age)
 summary(mhm$sex)
 
 
+
+#dropped 819 rows
 
 mhm$sex <- factor(mhm$sex, order = F)
 summary(mhm$sex)        
@@ -119,29 +123,29 @@ summary(mhm$country)
 ################### EDUCATION ##########
 summary(mhm$education)   ####### WHAT IS "Médio completo" ?????
 mhm <- mhm %>%              
-mutate(education = case_when(education == "Primary Education" ~ "less.hs",
-                             education == "Some High School" ~ "less.hs",
-                             education == "MÃ©dio completo" ~ "less.hs",
-                             education == "High School" ~ "hs",
-                             education == "Ensino tÃ©cnico" ~ "vocational",
-                             education == "Ensino profissionalizante" ~ "vocational",
-                             education == "Vocational certification" ~ "vocational",
-                             education == "Associateâ€™s Degree" ~ "assoc.deg",
-                             education == "Bachelor's Degree" ~ "bach.deg",
-                             education == "Master's Degree" ~ "grad.deg",
-                             education == "PhD" ~ "grad.deg",
-                             education == "J.D" ~ "grad.deg",
-                             education == "J.D. (Direito)" ~ "grad.deg",
-                             education == "M.D." ~ "grad.deg",
-                             education == "M.D. (Medicina)" ~ "grad.deg",
-                             education == "Other" ~ "other",
-                             education == "Prefer not to say" ~ "Prefer not to say"))
+  mutate(education = case_when(education == "Primary Education" ~ "less.hs",
+                               education == "Some High School" ~ "less.hs",
+                               education == "MÃ©dio completo" ~ "less.hs",
+                               education == "High School" ~ "hs",
+                               education == "Ensino tÃ©cnico" ~ "vocational",
+                               education == "Ensino profissionalizante" ~ "vocational",
+                               education == "Vocational certification" ~ "vocational",
+                               education == "Associateâ€™s Degree" ~ "assoc.deg",
+                               education == "Bachelor's Degree" ~ "bach.deg",
+                               education == "Master's Degree" ~ "grad.deg",
+                               education == "PhD" ~ "grad.deg",
+                               education == "J.D" ~ "grad.deg",
+                               education == "J.D. (Direito)" ~ "grad.deg",
+                               education == "M.D." ~ "grad.deg",
+                               education == "M.D. (Medicina)" ~ "grad.deg",
+                               education == "Other" ~ "other",
+                               education == "Prefer not to say" ~ "Prefer not to say"))
 
 table(mhm$education)
 
 
 
-mhm$education[mhm$education == "other"] <- NA
+
 mhm$education <- factor(mhm$education, order = F)
 
 summary(mhm$education)
@@ -151,7 +155,7 @@ mhm$employment <- factor(mhm$employment, order = F)
 summary(mhm$employment)
 
 table(mhm$relationship)
-mhm$relationship[mhm$relationship == "Other"] <- NA
+
 mhm$relationship <- factor(mhm$relationship, order = F)
 summary(mhm$relationship)
 ######################## SOCIALIZE AND SLEEP  ############
@@ -204,15 +208,17 @@ mhm[mhm == "Prefer not to say"] <- NA
 mhm[mhm == ""] <- NA
 sum(is.na(mhm))
 
-mhm <- droplevels(mhm)
-
+mhm <- droplevels(mhm)  #get rid of "Prefer not to say"
+mhm$country <- as.integer(mhm$country)
 summary(mhm)
+
 
 save(mhm, file = "mhm.RData")
 
 
 ############# plot missingness
 library(naniar)
+library(knitr)
 gg_miss_var(mhm, show_pct = TRUE)
 
 
@@ -252,17 +258,9 @@ library(miceadds)
 
 
 
-impute <- mhm
-impute$country <- as.integer(impute$country)
 
 
-
-summary(impute)
-
-
-
-
-predMatrix <- quickpred(impute, mincor=0.10)
+predMatrix <- quickpred(mhm, mincor=0.10)
 predMatrix[, c("id")] <- 0                        # id = 0
 predMatrix[, c("country")] <- -2                  # country = -2
 predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
@@ -270,7 +268,7 @@ predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
 #a value 1 indicates a fixed effect and a value 2 indicates a random effect.
 
 
-impMethod <- make.method(data = impute, defaultMethod = "pmm")
+impMethod <- make.method(data = mhm, defaultMethod = "pmm")
 impMethod[c("sex")] <- "polyreg"      
 impMethod[c("genderdiff")] <- "logreg"
 impMethod[c("education")] <- "polyreg"
@@ -282,11 +280,11 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 
 
-imp_overall <- mice(impute, method = impMethod,
-                 predictorMatrix = predMatrix,
-                 maxit = 5,
-                 m = 5,
-                 seed = 1234)
+imp_overall <- mice(mhm, method = impMethod,
+                    predictorMatrix = predMatrix,
+                    maxit = 10,
+                    m = 10,
+                    seed = 111)
 
 
 save(imp_overall, file = "imp_overall.RData")
@@ -337,24 +335,24 @@ library(knitr)
 
 
 weightdat_overall <- weightthem(PA ~   
-                       age
-                     + sex
-                     + genderdiff
-                     + education
-                     + employment
-                     + relationship
-                     + socialize
-                     + sleep
-                     + meddiagnosis
-                     + mhseeking
-                     + childtrauma
-                     + adulttrauma,
-           imp_overall, 
-           approach = 'within',    #calculating distance measures within each imputed dataset
-                                   #and weighting observations based on them 
-           method = "cbps",        #covariate balancing PS
-           estimand = "ATT",
-           focal = "Rarely/Never") 
+                                  age
+                                + sex
+                                + genderdiff
+                                + education
+                                + employment
+                                + relationship
+                                + socialize
+                                + sleep
+                                + meddiagnosis
+                                + mhseeking
+                                + childtrauma
+                                + adulttrauma,
+                                imp_overall, 
+                                approach = 'within',    #calculating distance measures within each imputed dataset
+                                #and weighting observations based on them 
+                                method = "cbps",        #covariate balancing PS
+                                estimand = "ATT",
+                                focal = "Rarely/Never") 
 
 save(weightdat_overall, file = "weightdat_overall.RData")
 
@@ -362,25 +360,29 @@ save(weightdat_overall, file = "weightdat_overall.RData")
 
 
 
-love.plot(weightdat_overall, binary = "std", var.order = "un", stats = "m",
-           thresholds = c(.10, .05)) + theme(legend.position = "top")
+# love.plot(weightdat_overall, binary = "std", var.order = "un", stats = "m",
+#            thresholds = c(.10, .05)) + theme(legend.position = "top")
+# 
+# 
 
 
-
-
-
-
+rm(dat)
+rm(dat1)
+gc()
 ###################### WEIGHTING PA*AGE*MHSEEK INTERACTIONS ############################################
 #############
 ############# SPLIT SAMPLE BY SEX
-load("mhm.Rdata")
+
+# load("mhm.Rdata")
 
 mhm_female <- mhm %>%
   subset(sex == "Female")
 
-mhm <- mhm %>%
+
+
+mhm_female <- mhm_female %>%
   mutate(age = case_when(age == "18-24" ~ "young.adult",
-                         age == "25-34" ~ "early.adult",
+                         age == "25-34" ~ "young.adult",
                          age == "35-44" ~ "middle.adult",
                          age == "45-54" ~ "middle.adult",
                          age == "55-64" ~ "middle.adult",
@@ -389,21 +391,19 @@ mhm <- mhm %>%
                          age == "85+"   ~ "senior"
   ))
 
-mhm$age <- factor(mhm$age, order = F,
-                  levels = c("young.adult",
-                             "early.adult",
-                             "middle.adult",
-                             "senior"))
+mhm_female$age <- factor(mhm_female$age, order = F,
+                         levels = c("young.adult",
+                                    "middle.adult",
+                                    "senior"))
 
-mhm_female$country <- as.integer(mhm_female$country)
+
+
 
 
 predMatrix <- quickpred(mhm_female, mincor=0.10)
-predMatrix[, c("id")] <- 0                        # id = 0
-predMatrix[, c("country")] <- -2                  # country = -2
-predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
-#In the predictor matrix, -2 denotes the class variable,
-#a value 1 indicates a fixed effect and a value 2 indicates a random effect.
+predMatrix[, c("id")] <- 0                       
+predMatrix[, c("country")] <- -2                  
+predMatrix[c("country","id"), "country"] <- 0    
 
 
 impMethod <- make.method(data = mhm_female, defaultMethod = "pmm")
@@ -418,10 +418,10 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 
 imp_female <- mice(mhm_female, method = impMethod,
-                    predictorMatrix = predMatrix,
-                    maxit = 5,
-                    m = 5,
-                    seed = 1234)
+                   predictorMatrix = predMatrix,
+                   maxit = 10,
+                   m = 10,
+                   seed = 111)
 
 
 save(imp_female, file = "imp_female.RData")
@@ -432,20 +432,43 @@ imp_female_long <- complete(imp_female, action = 'long', include = TRUE)
 
 save(imp_female_long, file = "imp_female_long.RData")
 
+################################################
+####################  MALE              ########
+################################################
 
-####################  MALE
 
 mhm_male <- mhm %>%
   subset(sex == "Male")
-mhm_male$country <- as.integer(mhm_male$country)
+
+
+
+mhm_male <- mhm_male %>%
+  mutate(age = case_when(age == "18-24" ~ "young.adult",
+                         age == "25-34" ~ "young.adult",
+                         age == "35-44" ~ "middle.adult",
+                         age == "45-54" ~ "middle.adult",
+                         age == "55-64" ~ "middle.adult",
+                         age == "65-74" ~ "senior",
+                         age == "75-84" ~ "senior",
+                         age == "85+"   ~ "senior"
+  ))
+
+mhm_male$age <- factor(mhm_male$age, order = F,
+                       levels = c("young.adult",
+                                  "middle.adult",
+                                  "senior"))
+
+
+
+
+
 
 
 predMatrix <- quickpred(mhm_male, mincor=0.10)
-predMatrix[, c("id")] <- 0                        # id = 0
-predMatrix[, c("country")] <- -2                  # country = -2
-predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
-#In the predictor matrix, -2 denotes the class variable,
-#a value 1 indicates a fixed effect and a value 2 indicates a random effect.
+predMatrix[, c("id")] <- 0                        
+predMatrix[, c("country")] <- -2                  
+predMatrix[c("country","id"), "country"] <- 0     
+
 
 
 impMethod <- make.method(data = mhm_male, defaultMethod = "pmm")
@@ -460,10 +483,10 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 
 imp_male <- mice(mhm_male, method = impMethod,
-                   predictorMatrix = predMatrix,
-                   maxit = 5,
-                   m = 5,
-                   seed = 1234)
+                 predictorMatrix = predMatrix,
+                 maxit = 10,
+                 m = 10,
+                 seed = 111)
 
 
 save(imp_male, file = "imp_male.RData")
@@ -476,28 +499,26 @@ save(imp_male_long, file = "imp_male_long.RData")
 ###############################
 #################################### WEIGHTING INTERACTIONS
 #########################################
+# load("imp_female.RData")
 
 
 
-library(MatchThem)
-load("imp_female.RData")
 
-
-weightdat_female <- weightthem(PA*age*mhseeking ~   
-                                  
-                                + genderdiff
-                                + education
-                                + employment
-                                + relationship
-                                + socialize
-                                + sleep
-                                + meddiagnosis
-                                + childtrauma
-                                + adulttrauma,
-                                imp_female, 
-                                approach = 'within',  
-                                method = "cbps",        
-                                estimand = "ATE")
+weightdat_female <- weightthem(PA:age ~   
+                               + mhseeking 
+                               + genderdiff
+                               + education
+                               + employment
+                               + relationship
+                               + socialize
+                               + sleep
+                               + meddiagnosis
+                               + childtrauma
+                               + adulttrauma,
+                               imp_female, 
+                               approach = 'within',  
+                               method = "cbps",        
+                               estimand = "ATE")
 
 save(weightdat_female, file = "weightdat_female.RData")
 
@@ -516,24 +537,23 @@ save(weightdat_female, file = "weightdat_female.RData")
 
 ######################
 
-load("imp_male.RData")
+# load("imp_male.RData")
 
-weightdat_male <- weightthem(PA*age*mhseeking ~   
-                                 
-                               + genderdiff
-                               + education
-                               + employment
-                               + relationship
-                               + socialize
-                               + sleep
-                               + meddiagnosis
-                               + childtrauma
-                               + adulttrauma,
-                               imp_male, 
-                               approach = 'within',  
-                               method = "cbps",        
-                               estimand = "ATT",
-                               focal = "Rarely/Never") 
+weightdat_male <- weightthem(PA:age ~   
+                             + mhseeking
+                             + genderdiff
+                             + education
+                             + employment
+                             + relationship
+                             + socialize
+                             + sleep
+                             + meddiagnosis
+                             + childtrauma
+                             + adulttrauma,
+                             imp_male, 
+                             approach = 'within',  
+                             method = "cbps",        
+                             estimand = "ATE") 
 
 save(weightdat_male, file = "weightdat_male.RData")
 
