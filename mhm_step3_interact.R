@@ -14,8 +14,9 @@ library(MatchThem)
 des <- svydesign(ids = ~country, weights = ~1,
                  data = imp_overall_long) 
 
-mhq_female_int <-with(weightdat_female, svyglm(mhq ~ 
-                                              PA*age*mhseeking
+
+mhq_female_int <-with(weightdat_female, svyglm(mhq ~ -1
+                                              + PA*age
                                               + genderdiff
                                               + education
                                               + employment
@@ -37,7 +38,7 @@ kable(summary(pool(mhq_female_int)),
 ####### PLOTTING 1ST ITERATION ##########
 
 cat_plot(mhq_female_int[["analyses"]][[1]],
-         pred = PA, modx = age, mod2 = mhseeking, 
+         pred = PA, modx = age, 
          geom = "line")
 
 
@@ -45,8 +46,8 @@ cat_plot(mhq_female_int[["analyses"]][[1]],
 
 
 
-mhq_male_int <-with(weightdat_male, svyglm(mhq ~ 
-                                                 PA*age*mhseeking
+mhq_male_int <-with(weightdat_male, svyglm(mhq ~ -1
+                                               + PA*age
                                                + genderdiff
                                                + education
                                                + employment
@@ -68,7 +69,7 @@ kable(summary(pool(mhq_male_int)),
 ####### PLOTTING 1ST ITERATION ##########
 
 cat_plot(mhq_male_int[["analyses"]][[1]],
-         pred = PA, modx = age, mod2 = mhseeking, 
+         pred = PA, modx = age, 
          geom = "line")
 
 

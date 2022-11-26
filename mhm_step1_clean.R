@@ -499,7 +499,8 @@ save(imp_male_long, file = "imp_male_long.RData")
 ###############################
 #################################### WEIGHTING INTERACTIONS
 #########################################
-# load("imp_female.RData")
+library(MatchThem)
+load("imp_female.RData")
 
 
 
@@ -537,7 +538,7 @@ save(weightdat_female, file = "weightdat_female.RData")
 
 ######################
 
-# load("imp_male.RData")
+load("imp_male.RData")
 
 weightdat_male <- weightthem(PA:age ~   
                              + mhseeking
