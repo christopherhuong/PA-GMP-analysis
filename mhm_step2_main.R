@@ -7,23 +7,48 @@ library(knitr)
 #load in multiply imputed, weighted data
 #multinomial treatment = PA, focal = "Rarely/never"
 #estimand = ATT, approach = "within", method = cbps
-load("imp_overall_long.RData")  
+# load("imp_overall_long.RData")  
 load("weightdat_overall.RData")
+
+
+
+
 ############ SURVEY DESIGN 
 #
-des <- svydesign(ids = ~country, weights = ~1, 
-                                 data = imp_overall_long) 
-
-# nest = T? try it out
-# doesnt change results
-
+# des <- svydesign(ids = ~country, weights = ~1, 
+#                                  data = imp_overall_long) 
+# save(des, file = "des.RData")
+load("des.RData")
 
 
-######################## 
-########################     MHQ
-########################
 
-mhq_overall <-with(weightdat_overall, svyglm(mhq ~  
+########################            ##############################
+########################     MHQ    ##############################
+########################            ##############################
+# > summary(mhm$mhq)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -166.40   -0.30   79.10   67.93  128.70  200.00 
+
+mhq_overall <- with(weightdat_overall, svyglm(mhq ~ -1 + PA,
+                                              design = des,
+                                              family = gaussian()))
+
+kable(summary(pool(mhq_overall)),
+      digits = 3) 
+
+
+# |term                    | estimate| std.error| statistic|       df| p.value|
+# |:-----------------------|--------:|---------:|---------:|--------:|-------:|
+# |PARarely/Never          |   47.063|     0.195|   241.576| 341785.0|       0|
+# |PALess than once a week |   61.083|     0.370|   164.887| 325561.3|       0|
+# |PAOnce a week           |   64.426|     0.491|   131.337| 320433.1|       0|
+# |PAFew days a week       |   67.220|     0.309|   217.508| 249767.8|       0|
+# |PAEvery day             |   67.904|     0.494|   137.567| 142827.9|       0|
+# 
+
+
+####### double robustness check  ############
+mhq_overall_robust <-with(weightdat_overall, svyglm(mhq ~ -1 
                                              + PA 
                                              + age
                                              + sex
@@ -44,26 +69,10 @@ mhq_overall <-with(weightdat_overall, svyglm(mhq ~
 
 
 
-kable(summary(pool(mhq_overall)),
+kable(summary(pool(mhq_overall_robust)),
       digits = 3) 
 
-# > summary(mhm$mhq)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -166.40   -0.30   79.10   67.93  128.70  200.00 
 
-
-# WITH INTERCEPT
-# |term                         | estimate| std.error| statistic|         df| p.value|
-# |:----------------------------|--------:|---------:|---------:|----------:|-------:|
-# |(Intercept)                  |   -1.065|     1.071|    -0.994|  20765.908|   0.320|
-# |PALess than once a week      |   13.819|     0.336|    41.174| 327671.220|   0.000|
-# |PAOnce a week                |   17.149|     0.426|    40.265| 325363.788|   0.000|
-# |PAFew days a week            |   19.767|     0.296|    66.862| 258793.303|   0.000|
-# |PAEvery day                  |   20.651|     0.430|    48.009| 161914.265|   0.000|
-
-
-
-# WITHOUT INTERCEPT
 # |term                        | estimate| std.error| statistic|         df| p.value|
 # |:---------------------------|--------:|---------:|---------:|----------:|-------:|
 # |PARarely/Never              |   -1.065|     1.071|    -0.994|  20765.908|   0.320|
@@ -72,20 +81,89 @@ kable(summary(pool(mhq_overall)),
 # |PAFew days a week           |   18.702|     1.100|    17.005|  22557.235|   0.000|
 # |PAEvery day                 |   19.586|     1.162|    16.862|  25790.181|   0.000|
 
-
-library(jtools)
-
-plot_summs(mhq_overall)
+# how to interpret the p = 0.320?
 
 
 
-##############################
-##############################      COG
-##############################
+###### collider bias check #########
+### remove covariates that can plausibly be influenced
+### by both exposure and outcome (PA and mental health)
+### socialize, relationship, employment, sleep, mhseeking, meddiagnosis
+
+mhq_overall_collider <-with(weightdat_overall, svyglm(mhq ~ -1 
+                                                    + PA 
+                                                    + age
+                                                    + sex
+                                                    + genderdiff
+                                                    + education
+                                                    + childtrauma
+                                                    + adulttrauma,
+                                                    
+                                                    design = des,
+                                                    
+                                                    family = gaussian())) 
 
 
-cog_overall <-with(weightdat_overall, svyglm(cog ~  
-                                                      PA 
+
+kable(summary(pool(mhq_overall_collider)),
+      digits = 3) 
+
+# |term                    | estimate| std.error| statistic|         df| p.value|
+# |:-----------------------|--------:|---------:|---------:|----------:|-------:|
+# |PARarely/Never          |   33.993|     0.784|    43.375|   8159.516|   0.000|
+# |PALess than once a week |   47.902|     0.830|    57.741|  11265.698|   0.000|
+# |PAOnce a week           |   51.191|     0.880|    58.161|   9977.521|   0.000|
+# |PAFew days a week       |   54.041|     0.813|    66.496|   7171.193|   0.000|
+# |PAEvery day             |   54.570|     0.902|    60.523|  11179.089|   0.000|
+
+
+
+# 
+# library(jtools)
+# 
+# plot_summs(mhq_overall)
+
+
+
+
+
+#
+#
+#
+#
+#
+#
+##############################               ######################
+##############################      COG      ######################
+##############################               ######################
+# > summary(mhm$cog)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# -100.00   20.10   93.50   81.44  137.30  200.00 
+
+cog_overall <-with(weightdat_overall, svyglm(cog ~ -1 + PA,
+                                         
+                                               design = des,
+                                               family = gaussian()))
+
+
+kable(summary(pool(cog_overall)),
+      digits = 3) 
+
+# |term                    | estimate| std.error| statistic|       df| p.value|
+# |:-----------------------|--------:|---------:|---------:|--------:|-------:|
+# |PARarely/Never          |   63.180|     0.182|   348.042| 341785.0|       0|
+# |PALess than once a week |   75.622|     0.343|   220.366| 315336.3|       0|
+# |PAOnce a week           |   78.621|     0.453|   173.603| 303708.1|       0|
+# |PAFew days a week       |   81.389|     0.285|   285.338| 269660.4|       0|
+# |PAEvery day             |   83.486|     0.452|   184.729| 208368.1|       0|
+
+
+
+
+
+###### double robustness check ##########
+cog_overall_robust <-with(weightdat_overall, svyglm(cog ~ -1 
+                                                    + PA 
                                                     + age
                                                     + sex
                                                     + genderdiff
@@ -101,27 +179,12 @@ cog_overall <-with(weightdat_overall, svyglm(cog ~
                                                     
                                                     design = des,
                                                     
-                                                    family = gaussian()))
+                                                    family = gaussian())) 
 
 
-kable(summary(pool(cog_overall)),
+
+kable(summary(pool(cog_overall_robust)),
       digits = 3) 
-
-# > summary(mhm$cog)
-# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# -100.00   20.10   93.50   81.44  137.30  200.00 
-
-# WITH INTERCEPT
-# |term                         | estimate| std.error| statistic|         df| p.value|
-# |:----------------------------|--------:|---------:|---------:|----------:|-------:|
-# |(Intercept)                  |   25.175|     1.042|    24.171|  25840.443|   0.000|
-# |PALess than once a week      |   12.271|     0.327|    37.562| 319704.156|   0.000|
-# |PAOnce a week                |   15.246|     0.414|    36.838| 300355.702|   0.000|
-# |PAFew days a week            |   17.900|     0.288|    62.225| 287132.052|   0.000|
-# |PAEvery day                  |   20.134|     0.416|    48.454| 193855.439|   0.000|
-
-
-
 
 # WITHOUT INTERCEPT
 # |term                          | estimate| std.error| statistic|         df| p.value|
@@ -134,11 +197,40 @@ kable(summary(pool(cog_overall)),
 
 
 
+####### collider bias check ##########
+cog_overall_collider <-with(weightdat_overall, svyglm(cog ~ -1 
+                                                      + PA 
+                                                      + age
+                                                      + sex
+                                                      + genderdiff
+                                                      + education
+                                                      + childtrauma
+                                                      + adulttrauma,
+                                                      
+                                                      design = des,
+                                                      
+                                                      family = gaussian())) 
 
 
-###############################
-###############################   ADAPT / RESILIENCE
-############################### 
+
+kable(summary(pool(cog_overall_collider)),
+      digits = 3) 
+
+# |term                    | estimate| std.error| statistic|         df| p.value|
+# |:-----------------------|--------:|---------:|---------:|----------:|-------:|
+# |PARarely/Never          |   49.104|     0.744|    66.031|   5089.966|   0.000|
+# |PALess than once a week |   61.446|     0.787|    78.034|   6731.084|   0.000|
+# |PAOnce a week           |   64.390|     0.834|    77.192|   6390.519|   0.000|
+# |PAFew days a week       |   67.224|     0.770|    87.269|   5188.957|   0.000|
+# |PAEvery day             |   69.185|     0.856|    80.802|   6809.861|   0.000|
+
+
+
+
+
+###############################                       #################
+###############################   ADAPT / RESILIENCE  #################
+###############################                       #################
 
 
 
