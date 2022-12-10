@@ -348,13 +348,17 @@ weightdat_overall <- weightthem(PA ~
                                 + childtrauma
                                 + adulttrauma,
                                 imp_overall, 
-                                approach = 'within',    #calculating distance measures within each imputed dataset
-                                #and weighting observations based on them 
-                                method = "cbps",        #covariate balancing PS
+                                approach = 'within',  
+                                method = "cbps",    
                                 estimand = "ATT",
                                 focal = "Rarely/Never") 
 
 save(weightdat_overall, file = "weightdat_overall.RData")
+
+
+
+
+
 
 
 
