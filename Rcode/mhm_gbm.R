@@ -33,9 +33,22 @@ weightit_overall_gbm <- weightit(PA ~
 
 
 
-######### gbm on multiply imputed data
+######### ps using ordinal logistic regression
+######### on multiply imputed data
 
-weightdat_overall_gbm <- weightthem(PA ~   
+load("imp_overall.RData")
+
+imp_overall_long <- complete(imp_overall, action = 'long', include = TRUE)
+
+
+
+imp_overall_long$PA <- factor(imp_overall_long$PA, ordered = T)
+levels(imp_overall_long$PA)
+
+imp_overall_ord <- as.mids(imp_overall_long)
+
+
+weightdat_overall <- weightthem(PA ~   
                                       age
                                     + sex
                                     + genderdiff
@@ -48,11 +61,13 @@ weightdat_overall_gbm <- weightthem(PA ~
                                     + mhseeking
                                     + childtrauma
                                     + adulttrauma,
-                                    imp_overall, 
+                                    imp_overall_ord, 
                                     approach = 'within',  
-                                    method = "gbm",    
+                                    method = "ps",    
                                     estimand = "ATE",
                                     trim.at = 0.99)
+
+
 
 
 
@@ -81,6 +96,8 @@ imp_overall_long <- complete(imp_overall, action = 'long', include = TRUE)
 
 mhm$PA <- factor(mhm$PA, ordered = T)
 levels(mhm$PA)
+
+imp_overall <- as.mids(imp_overall_long)
 
 
 glm <- with(imp_overall, nnet::multinom(as.factor(PA)~ age + sex + genderdiff + education 
