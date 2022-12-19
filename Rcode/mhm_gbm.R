@@ -7,13 +7,18 @@ library(mice)
 load("mhm.RData")
 load("imp_overall.RData")
 
-
+mhm$PA <- factor(mhm$PA, ordered = T) #see if ordinal factor works
+levels(mhm$PA) 
 
 ################ GBM ################
-weightit_overall_gbm <- weightit(PA ~   
+#system.time should return how long the computation takes when its done,
+#so we can decide if its feasible to rerun gbm on multiply imputed data
+#if so, probably reduce mice iterations to 5 from 10, to make more feasible
+
+system.time(weightit_overall_gbm <- weightit(PA ~   
                                    age
                                  + sex
-                                 + genderdiff
+                                 + genderdiff #maybe remove this to make it more computationally feasible
                                  + education
                                  + employment
                                  + relationship
@@ -28,7 +33,9 @@ weightit_overall_gbm <- weightit(PA ~
                                  method = "gbm",    
                                  estimand = "ATE",
                                  trim.at = 0.99,
-                                 distribution = "multinomial")
+                                 distribution = "multinomial"))
+
+save(weightit_overall_gbm, file = "weightit_overall_gbm.RData")
 
 
 
