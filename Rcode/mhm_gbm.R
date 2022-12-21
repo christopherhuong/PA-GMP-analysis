@@ -5,7 +5,7 @@ library(WeightIt)
 library(mice)
 
 load("mhm.RData")
-load("imp_overall.RData")
+
 
 mhm$PA <- factor(mhm$PA, ordered = T) #see if ordinal factor works
 levels(mhm$PA) 
