@@ -204,11 +204,40 @@ dat<-as.data.frame(data)
 
 
 
-
-
 glm<- nnet::multinom(as.factor(trt)~ X1+ X2+ X3+ X4, data=dat)
 probab<- round(predict(glm, newdata=dat, type="probs"),digits=8)
 gps<-cbind(probab[,1],probab[,2],1-probab[,1]-probab[,2])
 #Create scalar balancing power parameter
 fit<-GPSCDF(pscores=gps)
+
+fit2 <- GPSCDF(pscores = gps, data = dat)
+fit2$ppar
+fit2$data
+
+
+fit3 <- GPSCDF(pscores=gps, data=dat, stratify=T, nstrat=5)
+
+library(survival)
+
+
+fit3$data$trt <- as.factor(fit3$data$trt)
+
+model1 <- survival::clogit(Y~trt+X1+X2+X3+X4+strata(strata),
+                           data = fit3$data)
+
+
+summary(model1)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
