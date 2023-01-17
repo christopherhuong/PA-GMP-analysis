@@ -60,7 +60,7 @@ gg_miss_var(mhm, show_pct = TRUE)   # no NAs due to missingness = " " in datafra
 
 
 mhm <- mhm %>%
-  subset(select = -c(ethnicity, mhdiagnosis))
+  subset(select = -c(ethnicity, mhdiagnosis, genderdiff))
 
 ###### drop due to missingness
 ###### effects of ethnicity may be somewhat attenuated by country nesting
@@ -80,12 +80,7 @@ mhm <- mhm %>%
 
 #dropped 2 rows
 
-mhm$PA <- factor(mhm$PA, order = F,     #factor() automatically drops unused levels
-                 levels = c("Rarely/Never", 
-                            "Less than once a week",
-                            "Once a week",
-                            "Few days a week",
-                            "Every day"))
+mhm$PA <- factor(mhm$PA)
 
 
 
@@ -111,8 +106,6 @@ summary(mhm$sex)
 
 
 
-mhm$genderdiff <- factor(mhm$genderdiff, order = F)
-summary(mhm$genderdiff)
 
 ##################### COUNTRY ###########
 mhm$country <- factor(mhm$country, order = F)
@@ -270,7 +263,6 @@ predMatrix[c("country","id"), "country"] <- 0     # id x country = 0
 
 impMethod <- make.method(data = mhm, defaultMethod = "pmm")
 impMethod[c("sex")] <- "polyreg"      
-impMethod[c("genderdiff")] <- "logreg"
 impMethod[c("education")] <- "polyreg"
 impMethod[c("relationship")] <- "polyreg"
 impMethod[c("meddiagnosis")] <- "logreg"
@@ -282,8 +274,8 @@ impMethod[c("adulttrauma")] <- "logreg"
 
 imp_overall <- mice(mhm, method = impMethod,
                     predictorMatrix = predMatrix,
-                    maxit = 10,
-                    m = 10,
+                    maxit = 5,
+                    m = 5,
                     seed = 111)
 
 
@@ -337,7 +329,6 @@ library(knitr)
 weightdat_overall <- weightthem(PA ~   
                                   age
                                 + sex
-                                + genderdiff
                                 + education
                                 + employment
                                 + relationship
