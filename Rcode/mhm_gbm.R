@@ -134,6 +134,34 @@ fit$ppar
 
 
 
+mhm <- mhm %>%
+  mutate(PA_binary = if_else(PA == "Rarely/Never", 0L, 1L))
+
+
+
+
+
+###### effect size #######
+d1 <- subset(mhm, PA_binary == 0, select = c("PA_binary", "mhq"))
+sd1 <- sd(d1$mhq)
+
+d2 <- subset(mhm, PA_binary == 1, select = c("PA_binary", "mhq"))
+sd2 <- sd(d2$mhq)
+
+
+
+sqrt((sd1^2+sd2^2)/2)
+
+
+
+
+library(survey)
+des <- svydesign(ids = ~country, weights = weight_gbm_binary$weights,
+                                 data = mhm)
+mod1 <- svyglm(mhq ~ PA,
+               weight_gbm_binary,
+               design = des,
+               family = gaussian())
 
 
 
