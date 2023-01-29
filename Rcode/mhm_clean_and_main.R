@@ -304,6 +304,11 @@ bal.tab(gbm_weights$treat ~ gbm_weights$covs,
 love.plot(gbm_weights, binary = "std", var.order = "un", stats = "m",
            thresholds = .05) + theme(legend.position = "top")
 
+
+# Balance tally for mean differences
+# count
+# Balanced, <0.05        41
+# Not Balanced, >0.05     0
 ############### ESTIMATING MAIN TREATMENT EFFECT ############
 
 
@@ -325,6 +330,15 @@ confint(mhq)
 #                2.5 %  97.5 %
 # (Intercept) 57.92777 68.4314
 # PA          15.52110 21.3689
+
+
+#cohen's d caclulation
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$mhq)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$mhq)
+18.455/(sqrt((sd1^2+sd2^2)/2)) # = 0.26
+
 
 
 
@@ -374,6 +388,12 @@ confint(cog)
 # PA             13.77475 19.10279
 
 
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$cog)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$cog)
+16.439/(sqrt((sd1^2+sd2^2)/2)) # = 0.25
+
 
 # adapt / resilience ------------------------------------------------------
 
@@ -393,7 +413,11 @@ confint(adaptresil)
 #   (Intercept)    79.04222 88.12355
 # PA               15.40061 20.87592
 
-
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$adaptresil)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$adaptresil)
+18.138/(sqrt((sd1^2+sd2^2)/2)) # = 0.27
 
 # drive / motivation ------------------------------------------------------
 
@@ -414,6 +438,11 @@ confint(drivemotiv)
 #   (Intercept)   74.72539 84.71355
 # PA              12.62235 18.86920
 
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$drivemotiv)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$drivemotiv)
+15.746/(sqrt((sd1^2+sd2^2)/2)) # = 0.24
 
 # mood / outlook ----------------------------------------------------------
 
@@ -434,7 +463,11 @@ confint(moodoutlook)
 #   (Intercept) 58.67378 68.53301
 # PA            13.44200 19.19970
 
-
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$moodoutlook)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$moodoutlook)
+16.321/(sqrt((sd1^2+sd2^2)/2)) # = 0.24
 
 # social self -------------------------------------------------------------
 
@@ -455,7 +488,11 @@ confint(socialself)
 #   (Intercept) 62.77923 72.99011
 # PA            11.12054 16.93053
 
-
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$socialself)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$socialself)
+14.026/(sqrt((sd1^2+sd2^2)/2)) # = 0.19
 
 # mind body ---------------------------------------------------------------
 
@@ -475,7 +512,11 @@ confint(mindbody)
 #   (Intercept)   63.12209 71.23442
 # PA              17.25232 22.36218
 
-
+sd1 <- subset(mhm, PA == 0)
+sd1 <-  sd(sd1$mindbody)
+sd2 <- subset(mhm, PA == 1)
+sd2 <-  sd(sd2$mindbody)
+19.807/(sqrt((sd1^2+sd2^2)/2)) # = 0.32
 
 
 
