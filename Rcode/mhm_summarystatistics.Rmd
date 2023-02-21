@@ -1,17 +1,24 @@
 ---
 title: "mhm_summarystatistics"
-output: word_document
+output:
+  html_document:
+    df_print: paged
+  word_document: default
 date: "2023-02-17"
 ---
-```{r}
-library(table1, quietly = T)
-library(printr, quietly = T)
+```{r, message = F}
+library(table1)
+library(printr)
 load("mhm_summary.RData")
 ```
 
 ```{r}
-x <- table1::table1(~ Sex + Education + Employment | Age, data=mhm_summary)
-as.data.frame(x)
+table1(~ sex + education + employment + relationship + socialize + sleep + meddiagnosis + mhseeking + childtrauma + adulttrauma + PA + mhq + cog + adaptresil + drivemotiv + moodoutlook + socialself + mindbody | age, data=mhm_summary,
+       overall=c(left="Total"),
+       caption = "Population descriptives",
+       footnote = "* Mean and SD presented"
+       )
+
 ```
 
 

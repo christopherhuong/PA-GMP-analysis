@@ -31,7 +31,7 @@ mhm <- mhm %>%
 
 mhm$education <- factor(mhm$education)
 
-
+load("dat.RData")
 
 dat <- dat %>%
   subset(Frequency.of.doing.exercise == "Every day" |
@@ -44,18 +44,37 @@ mhm$country <- dat$Country
 sort(table(mhm$country), decreasing = T)[1:10]
 
 
-colnames(mhm) <- 
-  c("MHQ", "Core Cognition", "Adaptability and Resilience",
-    "Drive and Motivation", "Mood and Outlook", "Social Self",
-    "Mind-Body", 
-    "Physical Activity", "Age", "Sex", "Country", "Education",
-    "Employment", "Relationship", "Socialize Frequency",
-    "Adequate Sleep Frequency", "Medical Diagnosis",
-    "Mental Health Treatment in Past Year", 
-    "Experienced Childhood Trauma", "Experienced Adult Trauma")
+
+
+label(mhm$mhq) <- "MHQ*"
+label(mhm$cog) <- "Core Cognition*"
+label(mhm$adaptresil) <- "Adaptability and Resilience*"
+label(mhm$drivemotiv) <- "Drive and Motivation*"
+label(mhm$moodoutlook) <- "Mood and Outlook*"
+label(mhm$socialself) <- "Social Self*"
+label(mhm$mindbody) <- "Mind-Body*"
+label(mhm$PA) <- "Physical Activity"
+label(mhm$age) <- "Age"
+label(mhm$sex) <- "Sex"
+label(mhm$country) <- "Country"
+label(mhm$education) <- "Education"
+label(mhm$employment) <- "Employment"
+label(mhm$relationship) <- "Relationship Status"
+label(mhm$socialize) <- "Socialize Frequency"
+label(mhm$sleep) <- "Adequate Sleep Frequency"
+label(mhm$meddiagnosis) <- "Medical Diagnosis"
+label(mhm$mhseeking) <- "Mental Health Treatment in Past Year"
+label(mhm$childtrauma) <- "Experienced Childhood Trauma"
+label(mhm$adulttrauma) <- "Experienced Adult Trauma"
 
 
 
+mhm_summary <- mhm
+
+
+
+
+save(mhm_summary, file = "mhm_summary.RData")
 
 
 
