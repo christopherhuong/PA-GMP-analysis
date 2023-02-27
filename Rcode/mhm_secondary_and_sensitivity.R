@@ -405,3 +405,39 @@ confint(mhq_lm)
 
 
 
+
+
+
+# mi + gbm ----------------------------------------------------------------
+
+load('weightdat_gbm.RData')
+
+
+des_mi_gbm <- svydesign(ids = ~country, weights = ~1, 
+                      data = imp_overall_long) 
+
+mhq_mi_gbm <- with(weightdat_gbm, svyglm(mhq ~  PA,
+                                           design = des_mi_gbm,
+                                           family = gaussian()))
+
+summary(pool(mhq_mi_gbm), conf.int=T)
+
+
+
+
+
+matched.models <- with(weightdat_gbm,
+                       svyglm(mhq ~ PA, family = gaussian()),
+                       des_mi_gbm)
+
+summary(pool(matched.models)) # yep, same estimates
+
+
+
+
+
+
+
+
+
+
