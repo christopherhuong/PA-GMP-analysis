@@ -230,8 +230,6 @@ mhm$id <- 1:nrow(mhm)
 
 
 
-
-
 predMatrix <- quickpred(mhm, mincor=0.10)
 predMatrix[, c("id")] <- 0                        # id = 0
 predMatrix[, c("country")] <- -2                  # country = -2
@@ -420,18 +418,13 @@ mhq_mi_gbm <- with(weightdat_gbm, svyglm(mhq ~  PA,
                                            design = des_mi_gbm,
                                            family = gaussian()))
 
-summary(pool(mhq_mi_gbm), conf.int=T)
+kable(summary(pool(mhq_mi_gbm), conf.int = T))
 
 
-
-
-
-matched.models <- with(weightdat_gbm,
-                       svyglm(mhq ~ PA, family = gaussian()),
-                       des_mi_gbm)
-
-summary(pool(matched.models)) # yep, same estimates
-
+# |term        | estimate| std.error| statistic|       df| p.value|    2.5 %|   97.5 %|
+# |:-----------|--------:|---------:|---------:|--------:|-------:|--------:|--------:|
+# |(Intercept) | 63.65506| 0.2449686| 259.84991| 4290.462|       0| 63.17480| 64.13533|
+# |PA          | 17.96952| 0.2894301|  62.08589| 8261.027|       0| 17.40217| 18.53688|
 
 
 
