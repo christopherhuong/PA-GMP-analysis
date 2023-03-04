@@ -19,23 +19,23 @@ load('mhm.RData')
 #   
 # mhm$age_cat <- factor(mhm$age_cat)
 
-
-gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
-                         + sex
-                         + education
-                         + employment
-                         + relationship
-                         + socialize
-                         + sleep
-                         + meddiagnosis
-                         + mhseeking
-                         + childtrauma
-                         + adulttrauma,
-                         mhm,
-                         method = "gbm",
-                         estimand = "ATE",
-                         trim.at = 0.99,
-                         distribution = "gaussian")
+# 
+# gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
+#                          + sex
+#                          + education
+#                          + employment
+#                          + relationship
+#                          + socialize
+#                          + sleep
+#                          + meddiagnosis
+#                          + mhseeking
+#                          + childtrauma
+#                          + adulttrauma,
+#                          mhm,
+#                          method = "gbm",
+#                          estimand = "ATE",
+#                          trim.at = 0.99,
+#                          distribution = "gaussian")
 
 load("gbm_interact.RData")
 
@@ -59,6 +59,8 @@ interact_plot(mhq_interact,
               x.label = "Age",
               y.label = "MHQ",
               interval = T,
+              legend.main = " PA X Age",
+              jitter = 0.9
               )
 
 
