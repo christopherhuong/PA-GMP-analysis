@@ -13,7 +13,7 @@ load("mhm.RData")
 
 
 gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
-                           + sex
+                           sex
                          + education
                          + employment
                          + relationship
@@ -25,7 +25,7 @@ gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
                          + adulttrauma,
                          mhm,
                          method = "gbm",
-                         estimand = "ATE",
+                         estimand = "ATC",
                          trim.at = 0.99,
                          distribution = "gaussian")
 
@@ -217,7 +217,6 @@ install.packages("https://cran.r-project.org/src/contrib/Archive/linLIR/linLIR_1
                  repos=NULL, method="libcurl")
 install.packages("https://cran.r-project.org/src/contrib/Archive/hmi/hmi_1.0.0.tar.gz",
                  repos=NULL, method="libcurl")
-library(hmi)  #not available
 library(mice)
 library(miceadds)
 
@@ -308,10 +307,28 @@ weightdat_overall <- weightthem(PA ~
                                 imp_overall, 
                                 approach = 'within',  
                                 method = "cbps",    
-                                estimand = "ATT",
+                                estimand = "ATC",
                                 trim = 0.99) 
 
 save(weightdat_overall, file = "weightdat_overall.RData")
+
+
+
+
+bal.tab(weightdat_overall,
+        stats = c("m"),
+        s.d.denom = "control",
+        thresholds = c(m = .01))
+
+
+love.plot(weightdat_overall, binary = "std", var.order = "un", stats = "m",
+          thresholds = .01) + theme(legend.position = "top")
+
+
+
+
+
+
 
 
 
@@ -325,9 +342,7 @@ mhq_cbps <- with(weightdat_overall, svyglm(mhq ~  PA,
 kable(summary(pool(mhq_cbps), conf.int=T))
 # |term        | estimate| std.error| statistic|       df| p.value|    2.5 %|   97.5 %|
 # |:-----------|--------:|---------:|---------:|--------:|-------:|--------:|--------:|
-# |(Intercept) | 63.58819| 0.2272083| 279.86741| 340383.0|       0| 63.14287| 64.03352|
-# |PA          | 18.03639| 0.2745611|  65.69172| 341197.8|       0| 17.49826| 18.57452|
-
+# |PA          | 18.15347| 0.2756795|   65.8499| 276060.1|       0| 17.61315| 18.69379|
 
 
 
@@ -361,43 +376,7 @@ kable(summary(pool(mhq_cbps_doublerobust), conf.int=T))
 # |term             |    estimate| std.error|  statistic|          df|   p.value|       2.5 %|      97.5 %|
 #   |:--------------|-----------:|---------:|----------:|-----------:|---------:|-----------:|-----------:|
 #   |(Intercept)    |  -4.3692217| 0.8538291|  -5.117209|  17040.7674| 0.0000003|  -6.0428148|  -2.6956285|
-#   |PA             |  17.8738918| 0.2258155|  79.152620| 329220.4843| 0.0000000|  17.4312998|  18.3164837|
-
-
-
-
-
-# SIMPLE LINEAR MODEL (no weights) -----------------------------------------------------
-
-
-
-
-des_lm <- svydesign(ids = ~country, 
-                      data = mhm) 
-
-mhq_lm <- svyglm(mhq ~  PA
-                 + age  
-                 + sex
-                 + education
-                 + employment
-                 + relationship
-                 + socialize
-                 + sleep
-                 + meddiagnosis
-                 + mhseeking
-                 + childtrauma
-                 + adulttrauma,
-                        design = des_lm)
-
-summary(mhq_lm)
-# Estimate Std. Error t value Pr(>|t|)
-# (Intercept)      -3.2311     3.0760  -1.050  0.29483
-# PA                18.0694     1.0739  16.825  < 2e-16
-# age               11.5566     0.6762  17.089  < 2e-16
-confint(mhq_lm)
-#                      2.5 %       97.5 %
-#   (Intercept)      -9.2975699   2.83540597
-# PA                 15.9513466   20.18738800
+#   |PA             |  17.8668408| 0.2229397|  80.142037| 226896.0008| 0.0000000|  17.4298847|  18.3037969|
 
 
 
@@ -407,6 +386,28 @@ confint(mhq_lm)
 
 
 # mi + gbm ----------------------------------------------------------------
+
+
+weightdat_gbm       <- weightthem(PA ~  
+                                + age  
+                                + sex
+                                + education
+                                + employment
+                                + relationship
+                                + socialize
+                                + sleep
+                                + meddiagnosis
+                                + mhseeking
+                                + childtrauma
+                                + adulttrauma,
+                                imp_overall, 
+                                approach = 'within',  
+                                method = "gbm",    
+                                estimand = "ATC",
+                                trim = 0.99) 
+
+
+save(weightdat_gbm, file='weightdat_gbm.rdata')
 
 load('weightdat_gbm.RData')
 
@@ -427,7 +428,22 @@ kable(summary(pool(mhq_mi_gbm), conf.int = T))
 # |PA          | 17.96952| 0.2894301|  62.08589| 8261.027|       0| 17.40217| 18.53688|
 
 
+mi_gbm_doublerobust <- with(weightdat_gbm, svyglm(mhq ~  PA
+                                                        + age  
+                                                        + sex
+                                                        + education
+                                                        + employment
+                                                        + relationship
+                                                        + socialize
+                                                        + sleep
+                                                        + meddiagnosis
+                                                        + mhseeking
+                                                        + childtrauma
+                                                        + adulttrauma,
+                                                        design = des_mi_gbm,
+                                                        family = gaussian()))
 
+kable(summary(pool(mi_gbm_doublerobust), conf.int=T))
 
 
 

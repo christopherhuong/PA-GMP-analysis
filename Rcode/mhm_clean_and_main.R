@@ -250,11 +250,11 @@ bal.tab(PA ~ age + sex + education + employment + relationship
         + socialize + sleep + meddiagnosis + mhseeking
         + childtrauma + adulttrauma,
         data = mhm,
-        s.d.denom = "treated",
+        s.d.denom = "pooled",
         stats = c("m", "ks"),
-        thresholds = c(m = .05))
+        thresholds = c(m = .01))
 
-# 30 balanced, 11 not balanced
+# 15 balanced, 26 not balanced
 
 
 
@@ -280,7 +280,7 @@ bal.tab(PA ~ age + sex + education + employment + relationship
 #                       + adulttrauma,
 #                       mhm, 
 #                       method = "gbm",    
-#                       estimand = "ATT",
+#                       estimand = "ATC",
 #                       trim.at = 0.99,
 #                       distribution = "bernoulli")
 # 
@@ -297,12 +297,12 @@ summary(gbm_weights)
 bal.tab(gbm_weights$treat ~ gbm_weights$covs,
         data = gbm_weights,
         weights = gbm_weights$weights,
-        stats = c("m", "ks"),
-        s.d.denom = "treated",
-        thresholds = c(m = .05))
+        stats = c("m"),
+        s.d.denom = "control",
+        thresholds = c(m = .01))
 
 love.plot(gbm_weights, binary = "std", var.order = "un", stats = "m",
-           thresholds = .05) + theme(legend.position = "top")
+           thresholds = .01) + theme(legend.position = "top")
 
 
 # Balance tally for mean differences
@@ -323,13 +323,12 @@ mhq <- svyglm(mhq ~ PA,
 
 summary(mhq)
 # Coefficients:
-#               Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)     63.180      2.665   23.71   <2e-16 ***
-#   PA            18.445      1.484   12.43   <2e-16 ***
+#   Estimate Std. Error t value Pr(>|t|)    
+#   PA            17.857      1.413   12.64   <2e-16 ***
 confint(mhq)
-#                2.5 %  97.5 %
-# (Intercept) 57.92777 68.4314
-# PA          15.52110 21.3689
+#                  2.5 %   97.5 %
+#   (Intercept) 41.86981 52.25683
+# PA            15.07241 20.64148
 
 
 #cohen's d caclulation
@@ -337,7 +336,7 @@ sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$mhq)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$mhq)
-18.455/(sqrt((sd1^2+sd2^2)/2)) # = 0.26
+17.86/(sqrt((sd1^2+sd2^2)/2)) # = 0.25
 
 
 
@@ -360,13 +359,11 @@ mhq_doublerobust <- svyglm(mhq ~ PA
 
 summary(mhq_doublerobust)
 # Coefficients:
-#                  Estimate     Std. Error   t value   Pr(>|t|)
-# (Intercept)        -3.2311     3.0760      -1.050   0.29483
-# PA                  18.0694     1.0739      16.825  < 2e-16
+#                           Estimate   Std. Error t value Pr(>|t|)
+# PA                          17.7350     0.9852  18.001  < 2e-16
 confint(mhq_doublerobust)
-#                           2.5 %       97.5 %
-#   (Intercept)          -9.2975699   2.83540597
-# PA                     15.9513466  20.18738800
+
+# PA                                15.7919559  19.6779987
 
 # core cognition ----------------------------------------------------------
 
@@ -379,20 +376,18 @@ cog <- svyglm(cog ~ PA,
 
 summary(cog)
 # Coefficients:
-#                Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)     76.996      2.508   30.70   <2e-16 ***
-#   PA            16.439      1.352   12.16   <2e-16 ***
+#                  Estimate   Std. Error t value Pr(>|t|)    
+#   PA            16.327      1.246      13.11   <2e-16 ***
 confint(cog)
 #                2.5 %   97.5 %
-#   (Intercept)  72.05418 81.93794
-# PA             13.77475 19.10279
+# PA          13.87242 18.78155
 
 
 sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$cog)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$cog)
-16.439/(sqrt((sd1^2+sd2^2)/2)) # = 0.25
+16.327/(sqrt((sd1^2+sd2^2)/2)) # = 0.25
 
 
 # adapt / resilience ------------------------------------------------------
@@ -406,18 +401,16 @@ adaptresil <- svyglm(adaptresil ~ PA,
 summary(adaptresil)
 # Coefficients:
 #                  Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)     83.583      2.304   36.27   <2e-16 ***
-#   PA            18.138      1.389   13.06   <2e-16 ***
+#   PA            17.569      1.391   12.63   <2e-16 ***
 confint(adaptresil)
-#                  2.5 %   97.5 %
-#   (Intercept)    79.04222 88.12355
-# PA               15.40061 20.87592
+#              2.5 %   97.5 %
+# PA          14.82828 20.30942
 
 sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$adaptresil)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$adaptresil)
-18.138/(sqrt((sd1^2+sd2^2)/2)) # = 0.27
+17.569/(sqrt((sd1^2+sd2^2)/2)) # = 0.26
 
 # drive / motivation ------------------------------------------------------
 
@@ -431,18 +424,16 @@ drivemotiv <- svyglm(drivemotiv ~ PA,
 summary(drivemotiv)
 # Coefficients:
 #                 Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)     79.719      2.534  31.456   <2e-16 ***
-#   PA            15.746      1.585   9.934   <2e-16 ***
+#    PA            15.863      1.521   10.43   <2e-16 ***
 confint(drivemotiv)
 #                 2.5 %   97.5 %
-#   (Intercept)   74.72539 84.71355
-# PA              12.62235 18.86920
+# PA          12.86640 18.85896
 
 sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$drivemotiv)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$drivemotiv)
-15.746/(sqrt((sd1^2+sd2^2)/2)) # = 0.24
+15.86/(sqrt((sd1^2+sd2^2)/2)) # = 0.24
 
 # mood / outlook ----------------------------------------------------------
 
@@ -456,18 +447,16 @@ summary(moodoutlook)
 
 # Coefficients:
 #   Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)   63.603      2.502   25.43   <2e-16 ***
-#   PA            16.321      1.461   11.17   <2e-16 ***
+#   PA            15.273      1.391   10.98   <2e-16 ***
 confint(moodoutlook)
 #               2.5 %   97.5 %
-#   (Intercept) 58.67378 68.53301
-# PA            13.44200 19.19970
+# PA           12.53141 18.0139
 
 sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$moodoutlook)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$moodoutlook)
-16.321/(sqrt((sd1^2+sd2^2)/2)) # = 0.24
+15.27/(sqrt((sd1^2+sd2^2)/2)) # = 0.22
 
 # social self -------------------------------------------------------------
 
@@ -481,18 +470,16 @@ socialself <- svyglm(socialself ~ PA,
 summary(socialself)
 # Coefficients:
 #                 Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)     67.885      2.591  26.202   <2e-16 ***
-#   PA            14.026      1.474   9.514   <2e-16 ***
+#  PA             13.019      1.439   9.049   <2e-16 ***
 confint(socialself)
 #               2.5 %   97.5 %
-#   (Intercept) 62.77923 72.99011
-# PA            11.12054 16.93053
+# PA          10.18358 15.85395
 
 sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$socialself)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$socialself)
-14.026/(sqrt((sd1^2+sd2^2)/2)) # = 0.19
+13.019/(sqrt((sd1^2+sd2^2)/2)) # = 0.17
 
 # mind body ---------------------------------------------------------------
 
@@ -505,18 +492,16 @@ mindbody <- svyglm(mindbody ~ PA,
 summary(mindbody)
 # Coefficients:
 #                  Estimate Std. Error t value Pr(>|t|)    
-# (Intercept)      67.178      2.058   32.64   <2e-16 ***
-#   PA             19.807      1.297   15.28   <2e-16 ***
+#   PA            19.247      1.314   14.65   <2e-16 ***
 confint(mindbody)
 #                 2.5 %   97.5 %
-#   (Intercept)   63.12209 71.23442
-# PA              17.25232 22.36218
+# PA          16.65850 21.83616
 
 sd1 <- subset(mhm, PA == 0)
 sd1 <-  sd(sd1$mindbody)
 sd2 <- subset(mhm, PA == 1)
 sd2 <-  sd(sd2$mindbody)
-19.807/(sqrt((sd1^2+sd2^2)/2)) # = 0.32
+19.247/(sqrt((sd1^2+sd2^2)/2)) # = 0.31
 
 
 
