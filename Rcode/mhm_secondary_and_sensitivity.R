@@ -7,12 +7,21 @@ load("mhm.RData")
 
 
 # SECONDARY ANALYSIS: INTERACTIONS WITH GBM  ----------------------------------
+sum(count(subset(mhm, age == 1)),
+ count(subset(mhm, age == 2)),
+ count(subset(mhm, age == 3)),
+ count(subset(mhm, age == 4)),
+ count(subset(mhm, age == 5)),
+ count(subset(mhm, age == 6)),
+ count(subset(mhm, age == 7)),
+ count(subset(mhm, age == 8)))
 
 
 
 
 
-gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
+
+gbm_interact1 <- weightit(PA ~ 
                            sex
                          + education
                          + employment
@@ -23,7 +32,7 @@ gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
                          + mhseeking
                          + childtrauma
                          + adulttrauma,
-                         mhm,
+                         subset(mhm, age==1),
                          method = "gbm",
                          estimand = "ATC",
                          trim.at = 0.99,
@@ -31,7 +40,196 @@ gbm_interact <- weightit(PA*age ~ ### PA = integer 0/1, age = integer 1:8
 
 
 
-save(gbm_interact, file = "gbm_interact.RData")
+save(gbm_interact1, file = "gbm_interact1.RData")
+
+
+
+# 2 -----------------------------------------------------------------------
+
+
+
+
+
+gbm_interact2 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==2),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact2, file = "gbm_interact2.RData")
+
+
+# 3 -----------------------------------------------------------------------
+
+
+
+
+gbm_interact3 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==3),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact3, file = "gbm_interact3.RData")
+
+
+# 4 -----------------------------------------------------------------------
+
+
+
+
+gbm_interact4 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==4),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact4, file = "gbm_interact4.RData")
+
+
+# 5 -----------------------------------------------------------------------
+
+gbm_interact5 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==5),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact5, file = "gbm_interact5.RData")
+
+
+
+
+# 6 -----------------------------------------------------------------------
+
+
+gbm_interact6 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==6),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact6, file = "gbm_interact6.RData")
+
+
+# 7 -----------------------------------------------------------------------
+
+
+
+gbm_interact7 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==7),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact7, file = "gbm_interact7.RData")
+
+
+
+
+
+# 8 -----------------------------------------------------------------------
+
+gbm_interact8 <- weightit(PA ~ 
+                            sex
+                          + education
+                          + employment
+                          + relationship
+                          + socialize
+                          + sleep
+                          + meddiagnosis
+                          + mhseeking
+                          + childtrauma
+                          + adulttrauma,
+                          subset(mhm, age==8),
+                          method = "gbm",
+                          estimand = "ATC",
+                          trim.at = 0.99,
+                          distribution = "gaussian")
+
+
+
+save(gbm_interact8, file = "gbm_interact8.RData")
+
+
 
 
 
@@ -425,8 +623,7 @@ kable(summary(pool(mhq_mi_gbm), conf.int = T))
 # |term        | estimate| std.error| statistic|       df| p.value|    2.5 %|   97.5 %|
 # |:-----------|--------:|---------:|---------:|--------:|-------:|--------:|--------:|
 # |(Intercept) | 63.65506| 0.2449686| 259.84991| 4290.462|       0| 63.17480| 64.13533|
-# |PA          | 17.96952| 0.2894301|  62.08589| 8261.027|       0| 17.40217| 18.53688|
-
+# |PA          | 17.75436| 0.2754886|  64.44682| 189117.5|       0| 17.21441| 18.29431|
 
 mi_gbm_doublerobust <- with(weightdat_gbm, svyglm(mhq ~  PA
                                                         + age  
@@ -446,7 +643,9 @@ mi_gbm_doublerobust <- with(weightdat_gbm, svyglm(mhq ~  PA
 kable(summary(pool(mi_gbm_doublerobust), conf.int=T))
 
 
-
+# |term        |   estimate| std.error|  statistic|          df|   p.value|       2.5 %|      97.5 %|
+# |:-----------|----------:|---------:|----------:|-----------:|---------:|-----------:|-----------:|
+# |PA          |  17.770391| 0.2255080|  78.801587| 194756.9779| 0.0000000|  17.3284011|  18.2123818|
 
 
 
