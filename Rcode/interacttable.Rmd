@@ -1,0 +1,18 @@
+---
+title: "interact table"
+output: word_document
+date: "2023-03-25"
+---
+
+
+
+```{r, message = F}
+library(knitr)
+library(table1)
+
+
+load('interact_table.rdata')
+table1(~ Subdomain + ATC + SE | Subdomain,
+       data = interact_table)
+
+```
