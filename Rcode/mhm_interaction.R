@@ -451,7 +451,7 @@ ggplot(subset(subdomains, grp == "Mind Body"), aes(x=age, y=ATC, group = 1)) +
 
 ################################################
 
-# average PA --------------------------------------------------------------
+# average PA by age and activity --------------------------------------------------------------
 
 
 load('mhm.rdata')
@@ -470,20 +470,52 @@ mhm$PA <- factor(mhm$PA,
                  labels = c("Inactive", "Active"))
 
 
-ggplot(mhm, aes(x=age1, y=mhq, group = PA)) + 
-  geom_errorbar(aes(ymin=low, ymax=up), width=.5, position=position_dodge(0.1)) +
-  geom_line() + geom_point() + theme_minimal() +
-  labs(title = "Mind Body", y = "ATC", x = "Age") +
-  ylim(0, 35)
+
+  
+library(lme4)
 
 
 
+mod1 <- glm(mhq ~ PA*age1,
+            family = gaussian(),
+            data = mhm)
+
+summary(mod1)
 
 
-# age main effects --------------------------------------------------------
 
-load('mhm.rdata')
+mod2 <- lmer(mhq~ -1 + PA*age1 +( 1 | country ),
+             data = mhm)
 
-age_lm <- 
+summary(mod2)
+
+library(sjPlot)
+library(effects)
+library(ggplot2)
+
+
+plot_model(mod2)
+
+tab_model(mod2)
+
+eff.p1 <- effects::effect(term= "PA*age1", mod= mod2)
+plot(eff.p1)
+
+
+
+eff.p1 <- as.data.frame(eff.p1)
+ggplot(eff.p1, aes(age1, linetype=factor(PA),
+                   color = factor(PA))) +
+  geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+  geom_line(aes(y = lower,
+                group=factor(PA)), linetype =2) +
+  geom_line(aes(y = upper,
+                group=factor(PA)), linetype =2) +
+  xlab("Age") +
+  ylab("MHQ") +
+  scale_colour_discrete("") +
+  scale_linetype_discrete("") +
+  labs(color='PA', title = "Marginal effects on MHQ by age for inactive and active groups") + theme_minimal()
+
 
 
