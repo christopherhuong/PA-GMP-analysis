@@ -452,7 +452,7 @@ ggplot(subset(subdomains, grp == "Mind Body"), aes(x=age, y=ATC, group = 1)) +
 ################################################
 
 # average PA by age and activity --------------------------------------------------------------
-
+library(tidyverse)
 
 load('mhm.rdata')
 
@@ -473,32 +473,22 @@ mhm$PA <- factor(mhm$PA,
 
   
 library(lme4)
-
-
-
-mod1 <- glm(mhq ~ PA*age1,
-            family = gaussian(),
-            data = mhm)
-
-summary(mod1)
-
-
-
-mod2 <- lmer(mhq~ -1 + PA*age1 +( 1 | country ),
-             data = mhm)
-
-summary(mod2)
-
 library(sjPlot)
 library(effects)
 library(ggplot2)
 
 
-plot_model(mod2)
 
-tab_model(mod2)
 
-eff.p1 <- effects::effect(term= "PA*age1", mod= mod2)
+mod1 <- lmer(mhq~ -1 + PA*age1 +( 1 | country ),
+             data = mhm)
+
+summary(mod1)
+
+
+
+
+eff.p1 <- effects::effect(term= "PA*age1", mod= mod1)
 plot(eff.p1)
 
 
@@ -516,6 +506,210 @@ ggplot(eff.p1, aes(age1, linetype=factor(PA),
   scale_colour_discrete("") +
   scale_linetype_discrete("") +
   labs(color='PA', title = "Marginal effects on MHQ by age for inactive and active groups") + theme_minimal()
+
+
+
+# corecog -----------------------------------------------------------------
+
+
+mod2 <- lmer(cog~ -1 + PA*age1 +( 1 | country ),
+             data = mhm)
+
+summary(mod2)
+
+
+
+
+eff.p2 <- effects::effect(term= "PA*age1", mod= mod2)
+plot(eff.p2)
+
+
+
+eff.p2 <- as.data.frame(eff.p2)
+ggplot(eff.p2, aes(age1, linetype=factor(PA),
+                   color = factor(PA))) +
+  geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+  geom_line(aes(y = lower,
+                group=factor(PA)), linetype =2) +
+  geom_line(aes(y = upper,
+                group=factor(PA)), linetype =2) +
+  xlab("Age") +
+  ylab("Core Cognition") +
+  ylim(0,150)+
+  scale_colour_discrete("") +
+  scale_linetype_discrete("") +
+  labs(color='PA') + theme_minimal()
+
+
+
+
+
+# adaptresil --------------------------------------------------------------
+
+  
+mod3 <- lmer(adaptresil~ -1 + PA*age1 +( 1 | country ),
+               data = mhm)
+  
+summary(mod3)
+  
+  
+  
+  
+eff.p3 <- effects::effect(term= "PA*age1", mod= mod3)
+
+  
+  
+  
+eff.p3 <- as.data.frame(eff.p3)
+ggplot(eff.p3, aes(age1, linetype=factor(PA),
+                     color = factor(PA))) +
+    geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+    geom_line(aes(y = lower,
+                  group=factor(PA)), linetype =2) +
+    geom_line(aes(y = upper,
+                  group=factor(PA)), linetype =2) +
+    xlab("Age") +
+    ylab("Adaptability and Resilience") +
+    ylim(0,150)+
+    scale_colour_discrete("") +
+    scale_linetype_discrete("") +
+    labs(color='PA') + theme_minimal()
+  
+  
+
+
+# drivemotiv --------------------------------------------------------------
+
+
+
+mod4 <- lmer(drivemotiv~ -1 + PA*age1 +( 1 | country ),
+               data = mhm)
+  
+summary(mod4)
+  
+  
+  
+  
+eff.p4 <- effects::effect(term= "PA*age1", mod= mod4)
+  
+  
+  
+  
+eff.p4 <- as.data.frame(eff.p4)
+ggplot(eff.p4, aes(age1, linetype=factor(PA),
+                     color = factor(PA))) +
+    geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+    geom_line(aes(y = lower,
+                  group=factor(PA)), linetype =2) +
+    geom_line(aes(y = upper,
+                  group=factor(PA)), linetype =2) +
+    xlab("Age") +
+    ylab("Drive and Motivation") +
+    ylim(0,150)+
+    scale_colour_discrete("") +
+    scale_linetype_discrete("") +
+    labs(color='PA') + theme_minimal()
+  
+  
+
+# Mood Outlook ------------------------------------------------------------
+
+
+
+mod5 <- lmer(moodoutlook~ -1 + PA*age1 +( 1 | country ),
+             data = mhm)
+
+summary(mod5)
+
+
+
+
+eff.p5 <- effects::effect(term= "PA*age1", mod= mod5)
+
+
+
+
+eff.p5 <- as.data.frame(eff.p5)
+ggplot(eff.p5, aes(age1, linetype=factor(PA),
+                   color = factor(PA))) +
+  geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+  geom_line(aes(y = lower,
+                group=factor(PA)), linetype =2) +
+  geom_line(aes(y = upper,
+                group=factor(PA)), linetype =2) +
+  xlab("Age") +
+  ylab("Mood and Outlook") +
+  ylim(0,150)+
+  scale_colour_discrete("") +
+  scale_linetype_discrete("") +
+  labs(color='PA') + theme_minimal()
+
+
+
+# social self -------------------------------------------------------------
+
+
+
+mod6 <- lmer(socialself~ -1 + PA*age1 +( 1 | country ),
+             data = mhm)
+
+summary(mod6)
+
+
+
+
+eff.p6 <- effects::effect(term= "PA*age1", mod= mod6)
+
+
+
+
+eff.p6 <- as.data.frame(eff.p6)
+ggplot(eff.p6, aes(age1, linetype=factor(PA),
+                   color = factor(PA))) +
+  geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+  geom_line(aes(y = lower,
+                group=factor(PA)), linetype =2) +
+  geom_line(aes(y = upper,
+                group=factor(PA)), linetype =2) +
+  xlab("Age") +
+  ylab("Social Self") +
+  ylim(0,150)+
+  scale_colour_discrete("") +
+  scale_linetype_discrete("") +
+  labs(color='PA') + theme_minimal()
+
+
+
+
+# mindbody ----------------------------------------------------------------
+
+mod7 <- lmer(mindbody ~ -1 + PA*age1 +( 1 | country ),
+             data = mhm)
+
+summary(mod7)
+
+
+
+
+eff.p7 <- effects::effect(term= "PA*age1", mod= mod7)
+
+
+
+
+eff.p7 <- as.data.frame(eff.p7)
+ggplot(eff.p7, aes(age1, linetype=factor(PA),
+                   color = factor(PA))) +
+  geom_line(aes(y = fit, group=factor(PA)), linewidth=1.2) +
+  geom_line(aes(y = lower,
+                group=factor(PA)), linetype =2) +
+  geom_line(aes(y = upper,
+                group=factor(PA)), linetype =2) +
+  xlab("Age") +
+  ylab("Mind-Body Connection") +
+  ylim(0,150)+
+  scale_colour_discrete("") +
+  scale_linetype_discrete("") +
+  labs(color='PA') + theme_minimal()
 
 
 
