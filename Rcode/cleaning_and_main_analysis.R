@@ -14,12 +14,6 @@ load("dat.RData")
 
 # WRANGLING ---------------------------------------------------------------
 
-
-
-
-
-
-
 mhm <-data.frame()[1:nrow(dat), ]  # create new DF with n rows
 
 mhm <- mhm %>%                    #add and rename relevant variables to new df
@@ -98,7 +92,7 @@ summary(mhm$country)
 
 ###
 
-summary(mhm$education)   ####### WHAT IS "Médio completo" ?????
+summary(mhm$education)
 mhm <- mhm %>%              
   mutate(education = case_when(education == "Primary Education" ~ "less.hs",
                                education == "Some High School" ~ "less.hs",
@@ -244,8 +238,6 @@ kable(table(apply(mhm, 1, percentmiss)),
 
 
 ######## PRE-WEIGHTING BALANCE #############
-
-
 bal.tab(PA ~ age + sex + education + employment + relationship
         + socialize + sleep + meddiagnosis + mhseeking
         + childtrauma + adulttrauma,
@@ -255,11 +247,6 @@ bal.tab(PA ~ age + sex + education + employment + relationship
         thresholds = c(m = .01))
 
 # 15 balanced, 26 not balanced
-
-
-
-
-
 
 
 ########### GBM WEIGHTING #########
