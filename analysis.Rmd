@@ -1,0 +1,246 @@
+---
+title: "PA GMB"
+author: "Christopher Huong"
+date: "2023-12-10"
+output: html_document
+---
+
+Analysis code for 
+
+"Associations between physical activity and subcategories of mental health: A propensity score analysis among a global sample of 341,956 adults"
+
+Christopher Huong & Denver Brown 2023
+
+Simplified and annotated for resubmission 12/10/2023
+
+```{r, warning=F, message=F}
+library(tidyverse)
+library(naniar)
+library(WeightIt)
+library(survey)
+library(cobalt)
+
+```
+
+Load in raw data, check variable names, and check range of response dates
+
+```{r}
+load('rawdata.RData')
+
+names(rawdata)
+rawdata$Submit.Date..UTC. <- as.Date(rawdata$Submit.Date..UTC.)
+range(rawdata$Submit.Date..UTC.)
+
+```
+
+Select DVs, predictor, and covariates, rename variables
+```{r}
+cleandata <- rawdata %>% 
+  select(Overall.MHQ, Cognition, Adaptability...Resilence, Drive...Motivation, Mood...Outlook, Social...Self, Mind.Body.Connection, Frequency.of.doing.exercise, Age, Biological.Sex, Gender.Identity, Country, Ethnicity, Education, Employment, Current.Family.Situation, Frequency.of.Socializing, Frequency.of.getting.a.good.nights.sleep, Presence.Absence.of.Diagnosed.Medical.Disorder, Mental.Health.Treatment.Status, Childhood.traumas, Adult.traumas)
+
+names(cleandata) <- c('mhq', 'cog', 'adaptresil', 'drivemotiv', 'moodoutlook', 'socialself', 'mindbody', 'PA', 'age', 'sex', 'genderidentity', 'country', 'ethnicity', 'education', 'employment', 'relationship', 'socialize', 'sleep', 'meddiagnosis', 'mhseeking', 'childtrauma', 'adulttrauma')
+```
+
+Preprocessing variables
+
+```{r}
+summary(cleandata$PA)
+# remove 2 non-english responses
+cleandata <- cleandata %>% subset(PA == "Every day" | PA == "Few days a week" | PA == "Less than once a week" | PA == "Once a week" | PA == "Rarely/Never")
+# recode to binary treatment
+cleandata <- cleandata %>% mutate(PA = if_else(PA == "Rarely/Never", 0L, 1L))
+table(cleandata$PA)
+
+
+summary(cleandata$age)
+cleandata$age <- as.numeric(cleandata$age)
+
+summary(cleandata$sex)
+cleandata$sex <- factor(cleandata$sex, order=F)
+
+summary(cleandata$genderidentity)
+cleandata$genderidentity <- factor(cleandata$genderidentity, order=F)
+
+cleandata$country <- as.integer(cleandata$country)
+summary(cleandata$country)
+
+cleandata <- cleandata %>%              
+  mutate(education = case_when(education == "Primary Education" ~ "less.hs",
+                               education == "Some High School" ~ "less.hs",
+                               education == "MÃ©dio completo" ~ "less.hs",
+                               education == "High School" ~ "hs",
+                               education == "Ensino tÃ©cnico" ~ "vocational",
+                               education == "Ensino profissionalizante" ~ "vocational",
+                               education == "Vocational certification" ~ "vocational",
+                               education == "Associateâ€™s Degree" ~ "assoc.deg",
+                               education == "Bachelor's Degree" ~ "bach.deg",
+                               education == "Master's Degree" ~ "grad.deg",
+                               education == "PhD" ~ "grad.deg",
+                               education == "J.D" ~ "grad.deg",
+                               education == "J.D. (Direito)" ~ "grad.deg",
+                               education == "M.D." ~ "grad.deg",
+                               education == "M.D. (Medicina)" ~ "grad.deg",
+                               education == "Other" ~ "other",
+                               education == "Prefer not to say" ~ "Prefer not to say"))
+cleandata$education <- factor(cleandata$education, order=F)
+summary(cleandata$education)
+
+cleandata$employment <- factor(cleandata$employment, order = F)
+summary(cleandata$employment)
+
+cleandata$relationship <- factor(cleandata$relationship, order = F)
+summary(cleandata$relationship)
+
+cleandata$socialize <- factor(cleandata$socialize, order = F, levels = c("Rarely/Never", "1-3 times a month", "Once a week", "Several days a week"))
+summary(cleandata$socialize)
+
+cleandata$sleep <- factor(cleandata$sleep, order = F, levels = c("Hardly ever", "Some of the time", "Most of the time", "All of the time"))
+summary(cleandata$sleep)
+
+cleandata$meddiagnosis <- factor(cleandata$meddiagnosis, order = F)
+summary(cleandata$meddiagnosis)
+
+cleandata$mhseeking <- factor(cleandata$mhseeking, order = F)
+summary(cleandata$mhseeking)
+
+
+cleandata <- cleandata %>%
+  mutate(childtrauma = if_else(childtrauma =="|I did not experience any of the above during my childhood" | childtrauma == "|None of the above", 0L,1L),
+         adulttrauma = if_else(adulttrauma == "|I did not experience any of the above" | adulttrauma == "|None of the above", 0L,1L))
+
+table(cleandata$childtrauma)
+table(cleandata$adulttrauma)
+
+
+```
+
+
+Code and check missingness
+
+```{r}
+
+colSums(is.na(cleandata)) #check NAs per var
+apply(cleandata == "", 2, sum)
+apply(cleandata == "Prefer not to say", 2, sum)
+cleandata[cleandata == ""] <- NA
+cleandata[cleandata == "Prefer not to say"] <- NA 
+
+colSums(is.na(cleandata)) #check NAs per var
+
+#percent missingness by var
+percentmiss <- function(x){
+  sum(is.na(x)) / length(x) * 100} 
+
+apply(cleandata, 2, percentmiss)
+
+```
+
+"Data inspection revealed considerable missingness for ethnicity (84.2%) and gender identity (98.5%) due to only having been included on surveys for individuals who reported residing in certain countries and therefore these variables were excluded"
+
+```{r}
+cleandata <- cleandata %>% select(-c(ethnicity, genderidentity))
+cleandata <- droplevels(cleandata)  #get rid of "Prefer not to say" factor levels
+summary(cleandata)
+
+# save(cleandata, file="cleandata.RData")
+```
+
+
+# Propensity score weighting using GBM
+
+Check pre-weighting covariate balance across "treatment" groups
+```{r}
+bal.tab(PA ~ age + sex + education + employment + relationship + socialize + sleep + meddiagnosis + mhseeking + childtrauma + adulttrauma,
+        data = cleandata,
+        s.d.denom = "pooled",
+        stats = c("m", "ks"),
+        thresholds = c(m = .01))
+```
+
+
+Propensity score weighting using generalized boosted modeling and binary treatment based on the ATC estimand. 
+```{r}
+
+gbm_weights <- weightit(PA ~
+                        age
+                      + sex
+                      + education
+                      + employment
+                      + relationship
+                      + socialize
+                      + sleep
+                      + meddiagnosis
+                      + mhseeking
+                      + childtrauma
+                      + adulttrauma,
+                      data = cleandata,
+                      method = "gbm",
+                      estimand = "ATC",
+                      trim.at = 0.99,
+                      distribution = "bernoulli")
+
+save(gbm_weights, file = "gbm_weights.RData")
+
+load("gbm_weights.RData")
+
+```
+
+Covariate balancing diagnostics
+```{r}
+gbm_weights
+summary(gbm_weights)
+
+
+bal.tab(gbm_weights$treat ~ gbm_weights$covs,
+        data = gbm_weights,
+        weights = gbm_weights$weights,
+        stats = c("m"),
+        s.d.denom = "control",
+        thresholds = c(m = .01))
+
+love.plot(gbm_weights, binary = "std", var.order = "un", stats = "m",
+           thresholds = .01) + theme(legend.position = "top")
+```
+
+Estimating main treatment effect using weighted GLM, clustered by country
+```{r}
+des <- svydesign(ids = ~country, weights = gbm_weights$weights, data = cleandata)
+
+
+
+mhq <- svyglm(mhq ~ PA,
+              design = des,
+              family = gaussian())
+
+summary(mhq)
+# Coefficients:
+#   Estimate Std. Error t value Pr(>|t|)    
+#   PA            17.857      1.413   12.64   <2e-16 ***
+confint(mhq)
+#                  2.5 %   97.5 %
+#   (Intercept) 41.86981 52.25683
+# PA            15.07241 20.64148
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

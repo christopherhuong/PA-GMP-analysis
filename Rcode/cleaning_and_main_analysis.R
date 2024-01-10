@@ -9,8 +9,13 @@ library(cobalt)
 
 load("dat.RData")
 
+load("rawdata.RData")
+save(rawdata, file="rawdata.RData")
 
-
+dat$Submit.Date..UTC. <- as.Date(dat$Submit.Date..UTC.)
+str(dat$Submit.Date..UTC.)
+range(dat$Submit.Date..UTC.)
+#"2022-01-01" "2022-10-14"
 
 # WRANGLING ---------------------------------------------------------------
 
