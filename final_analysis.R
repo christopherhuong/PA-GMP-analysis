@@ -12,6 +12,7 @@ library(survey)
 library(cobalt)
 library(MatchThem) 
 library(mice)
+library(miceadds)
 library(knitr)
 
 # Load in raw data, check variable names, and check range of response dates
@@ -1568,7 +1569,7 @@ cleandata_mi <- mice(cleandata, method = impMethod,
 
 # save(cleandata_mi, file = "cleandata_mi.RData")
 
-load("cleandata_mi.RData")
+# load("cleandata_mi.RData")
 
 gbm_weights_mi <- weightthem(PA ~ age   + sex + education + employment + relationship + socialize
                              + sleep + meddiagnosis + mhseeking + childtrauma + adulttrauma,
@@ -1619,7 +1620,7 @@ cbps_weights_mi <- weightthem(PA ~ age   + sex + education + employment + relati
                              + sleep + meddiagnosis + mhseeking + childtrauma + adulttrauma,
                              cleandata_mi, 
                              approach = 'within', method = "cbps", estimand = "ATC", trim = 0.99, distribution = "bernoulli") 
-# save(cbps_weights_mi, file = "cbps_weights_mi.RData")
+save(cbps_weights_mi, file = "cbps_weights_mi.RData")
 load("cbps_weights_mi.RData")
 
 des <- svydesign(ids = ~country, weights = cbps_weights_mi$weights, data = cleandata)
