@@ -1,0 +1,20 @@
+"0","gbm_weights <- weightit(PA ~
+                        age
+                      + sex
+                      + education
+                      + employment
+                      + relationship
+                      + socialize
+                      + sleep
+                      + meddiagnosis
+                      + mhseeking
+                      + childtrauma
+                      + adulttrauma,
+                      data = cleandata,
+                      method = ""gbm"",
+                      estimand = ""ATC"",
+                      trim.at = 0.99,
+                      distribution = ""bernoulli"")
+"
+"2","Warning: Missing values are present in the covariates. See ?WeightIt::method_gbm for information on how these are handled."
+"2","Warning: No stop.method was provided. Using ""es.mean""."

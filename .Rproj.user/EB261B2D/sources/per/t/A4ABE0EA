@@ -1,0 +1,28 @@
+{
+    "id": "A4ABE0EA",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1705695559864.0,
+    "source_on_save": false,
+    "relative_order": 5,
+    "properties": {
+        "id": "9372bbef05324d5e98126998e7eb90e8",
+        "name": "gbm_weights_mi",
+        "title": "gbm_weights_mi",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 8316305152262893056,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1705695559864,
+    "read_only": false,
+    "read_only_alternatives": []
+}

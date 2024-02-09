@@ -1,0 +1,4 @@
+"0","cleandata <- rawdata %>% "
+"0","  select(Overall.MHQ, Cognition, Adaptability...Resilence, Drive...Motivation, Mood...Outlook, Social...Self, Mind.Body.Connection, Frequency.of.doing.exercise, Age, Biological.Sex, Gender.Identity, Country, Ethnicity, Education, Employment, Current.Family.Situation, Frequency.of.Socializing, Frequency.of.getting.a.good.nights.sleep, Presence.Absence.of.Diagnosed.Medical.Disorder, Mental.Health.Treatment.Status, Childhood.traumas, Adult.traumas)"
+"0",""
+"0","names(cleandata) <- c('mhq', 'cog', 'adaptresil', 'drivemotiv', 'moodoutlook', 'socialself', 'mindbody', 'PA', 'age', 'sex', 'genderidentity', 'country', 'ethnicity', 'education', 'employment', 'relationship', 'socialize', 'sleep', 'meddiagnosis', 'mhseeking', 'childtrauma', 'adulttrauma')"
